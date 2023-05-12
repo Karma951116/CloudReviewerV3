@@ -291,9 +291,9 @@ Rectangle {
                 runtimeCtx.setVersionUuid(versionUuid);
                 runtimeCtx.setAuditFileFolderUuid(auditFileFolderUuid);
                 runtimeCtx.setFileName(name);
-                runtimeCtx
                 root.goReview();
                 httpFunctions.getFileInfo(auditFileFolderUuid);
+                httpFunctions.getIndex("", auditFileFolderUuid);
             }
         }
     }

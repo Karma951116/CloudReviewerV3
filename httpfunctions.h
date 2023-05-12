@@ -53,6 +53,7 @@ signals:
     void replied(ReplyMeta meta, QByteArray content);
 public slots:
     void onUpdateTokens(QString accessToken, QString refreshToken);
+    void onRequestTsFile(QString tsName, TsFile* Ts, QString url = nullptr);
 private slots:
     void onRequestFinished(QNetworkReply* reply);
 };

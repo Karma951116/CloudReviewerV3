@@ -79,6 +79,7 @@ bool HttpFunctions::getUserCompany()
     url += "/cloudmovie/interrogationRoom/V1/getCustomerCompany";
     request_.setRawHeader("Cookie", session_id_.toUtf8());
 #endif
+    request_.setRawHeader("Content-Type", "text/html");
     QUrl qUrl;
     QUrlQuery qUrlQuery;
     qUrl.setUrl(url);
@@ -176,6 +177,7 @@ bool HttpFunctions::getFileInfo(QString auditFileFolderUuid)
     qUrl.setUrl(url);
     QUrlQuery qUrlQuery;
     qUrlQuery.addQueryItem("auditFileFolderUuid", auditFileFolderUuid);
+    qUrl.setQuery(qUrlQuery);
     request_.setUrl(qUrl);
     map_.insert(manager_->get(request_), ReplyMeta{FILE_INFO, 0});
     return true;
@@ -184,7 +186,12 @@ bool HttpFunctions::getFileInfo(QString auditFileFolderUuid)
 void HttpFunctions::getIndex(QString url, QString auditFileFolderUuid)
 {
     QUrl qUrl;
+#ifdef DEBUG
+    qUrl.setUrl("https://h0.rzisytn.cn/ppvod/0B0253771AF21F7993D06AF6F3C56D6F.m3u8");
+#endif
+#ifdef PROD
     qUrl.setUrl("http://192.168.10.110:8069/cloudmovie/interrogationRoom/V1/index.m3u8");
+#endif
     QUrlQuery qUrlQuery;
     qUrlQuery.addQueryItem("auditFileFolderUuid", auditFileFolderUuid);
     qUrl.setQuery(qUrlQuery);
@@ -192,7 +199,7 @@ void HttpFunctions::getIndex(QString url, QString auditFileFolderUuid)
     request_.setRawHeader("Cookie", session_id_.toUtf8());
     request_.setUrl(qUrl);
     map_.insert(manager_->get(request_), ReplyMeta{M3U8, 0});
-    getMediaInfo(auditFileFolderUuid);
+    //getMediaInfo(auditFileFolderUuid);
 }
 
 void HttpFunctions::getMediaInfo(QString auditFileFolderUuid)
@@ -211,12 +218,16 @@ void HttpFunctions::getMediaInfo(QString auditFileFolderUuid)
 void HttpFunctions::getTs(QString tsName, TsFile *ts, QString url = nullptr)
 {
     QUrl qUrl;
-    qUrl.setUrl("http://192.168.10.110:8069/cloudmovie/interrogationRoom/V1/index.ts");
-    QUrlQuery qUrlQuery;
-    qUrlQuery.addQueryItem("auditFileFolderUuid", "F923E2CAE3E44C798E918D23129A5C4B");
-    qUrlQuery.addQueryItem("TsName", tsName);
-    qUrl.setQuery(qUrlQuery);
-
+#ifdef DEBUG
+    qUrl.setUrl("https://h0.rzisytn.cn/20220122/KogZSjGG/1000kb/hls/" + tsName);
+#endif
+#ifdef PROD
+    //qUrl.setUrl("http://192.168.10.110:8069/cloudmovie/interrogationRoom/V1/index.ts");
+    //QUrlQuery qUrlQuery;
+    //qUrlQuery.addQueryItem("auditFileFolderUuid", "F923E2CAE3E44C798E918D23129A5C4B");
+    //qUrlQuery.addQueryItem("TsName", tsName);
+    //qUrl.setQuery(qUrlQuery);
+#endif
     request_.setRawHeader("Content-Type", "text/html");
     request_.setRawHeader("Cookie", session_id_.toUtf8());
     request_.setUrl(qUrl);
@@ -258,6 +269,12 @@ void HttpFunctions::onUpdateTokens(QString accessToken, QString refreshToken)
     accessToken_ = accessToken;
     refreshToken_ = refreshToken;
 }
+
+void HttpFunctions::onRequestTsFile(QString tsName, TsFile *Ts, QString url)
+{
+    getTs(tsName, Ts, url);
+}
+
 
 void HttpFunctions::onRequestFinished(QNetworkReply *reply)
 {

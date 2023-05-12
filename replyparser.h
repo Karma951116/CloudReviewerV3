@@ -44,6 +44,7 @@ signals:
     void commentReplyDone(bool success, QJsonArray comments = QJsonArray());
     void m3u8ReplyDone(bool success, HlsIndex* index);
     void mediaInfoReplyDone(bool success, int nbFrames, int frameRate);
+    void tsFetched(TsFile* ts);
 
 
     void updateTokens(QString accessToken, QString refreshToken);

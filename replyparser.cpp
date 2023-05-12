@@ -5,7 +5,7 @@
 #include <QJsonDocument>
 #include <QSettings>
 #include <QFile>
-
+#include <QDebug>
 
 ReplyParser::ReplyParser(QObject *parent) : QObject(parent)
 {
@@ -245,14 +245,21 @@ void ReplyParser::m3u8IndexProcess(QByteArray data)
     HlsIndex* index = new HlsIndex();
     index->setData(data.data());
     index->setUrl("http://192.168.10.110:8069/cloudmovie/interrogationRoom/V1/index.m3u8");
-    QRegExp re("(#EXTINF:.*,\\w*\\.ts\n)");
+    QRegExp re("#EXTINF:.*\\n.*\\n");
     // 逗号后的换行符方便处理
-    QString tmp = QString::fromLocal8Bit(data).replace(",\n", ",");
+    QString tmp = QString::fromLocal8Bit(data);
     re.indexIn(tmp);
-    QStringList targetList = re.cap(1).split("\n", QString::SkipEmptyParts);
+    QString capture = re.cap(0).replace(",\n", ",");
+    QStringList targetList = capture.split("\n", QString::SkipEmptyParts);
+    if (targetList.isEmpty()) {
+        m3u8ReplyDone(false, index);
+    }
     double indexDuration = 0;
     for (int i = 0; i < targetList.size(); i++) {
         QString target = targetList[i];
+        if (target.contains("#EXT-X-ENDLIST")) {
+            continue;
+        }
         TsFile* file = new TsFile();
         QStringList info = target.split(",");
         file->setTsIndex(i);
@@ -279,6 +286,7 @@ void ReplyParser::tsFileProcess(ReplyMeta meta, QByteArray data)
     ts->setData((uint8_t*)malloc(ts->dataLength()));
     memcpy(ts->data(), (uint8_t*)data.data(), ts->dataLength());
     ts->setFetched(true);
+    tsFetched(ts);
 }
 
 void ReplyParser::mediaInfoProcess(QByteArray data)

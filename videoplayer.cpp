@@ -6,11 +6,25 @@ struct buffer_data {
     size_t size;
 };
 
-VideoPlayer::VideoPlayer()
+VideoPlayer::VideoPlayer() :
+    state_(STOP),
+    swsContext_(nullptr)
 {
     if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
         qDebug() << "SDL init failed";
     }
+    connect(this, SIGNAL(updateImage(QImage)),
+            this, SLOT(onUpdateImage(QImage)));
+}
+
+void VideoPlayer::play()
+{
+    setState(PLAY);
+}
+
+void VideoPlayer::payse()
+{
+    setState(PAUSE);
 }
 
 HlsIndex *VideoPlayer::getHlsIndex() const
@@ -21,6 +35,8 @@ HlsIndex *VideoPlayer::getHlsIndex() const
 void VideoPlayer::setHlsIndex(HlsIndex *index)
 {
     index_ = index;
+    vRoll = new TsRoll(index->getSliceCount());
+    aRoll = new TsRoll(index->getSliceCount());
 }
 
 int VideoPlayer::getFetchIndex() const
@@ -127,133 +143,136 @@ void VideoPlayer::paint(QPainter *painter)
     }
 }
 
-int VideoPlayer::tsDecode(void *arg)
-{
-    VideoPlayer* player = (VideoPlayer*) arg;
-    HlsIndex* index = player->getHlsIndex();
-    QList<TsFile*> files = index->getFiles();
-    player->setDecodeIndex(0);
-    while (player->getState() != STOP) {
-        int decodeIndex = player->getDecodeIndex();
-        TsFile* file = files[decodeIndex];
-        AVFormatContext *fmt_ctx = nullptr;
-        AVIOContext *avio_ctx = nullptr;
-        AVCodec* video_codec_  = nullptr;
-        AVCodecContext* video_codec_context_  = nullptr;
-        AVStream* video_stream_  = nullptr;
-        AVCodec* audio_codec_  = nullptr;
-        AVCodecContext* audio_codec_context_  = nullptr;
-        AVStream* audio_stream_  = nullptr;
-        // io缓冲初始化
-        uint8_t *avio_ctx_buffer = nullptr;
-        size_t avio_ctx_buffer_size = 4096;
+//int VideoPlayer::tsDecode(void *arg)
+//{
+//    VideoPlayer* player = (VideoPlayer*) arg;
+//    HlsIndex* index = player->getHlsIndex();
+//    QList<TsFile*> files = index->getFiles();
+//    player->setDecodeIndex(0);
+//    while (player->getState() != STOP) {
+//        int decodeIndex = player->getDecodeIndex();
+//        TsFile* file = files[decodeIndex];
+//        if (!file->fetched()) {
+//            continue;
+//        }
+//        AVFormatContext *fmt_ctx = nullptr;
+//        AVIOContext *avio_ctx = nullptr;
+//        AVCodec* video_codec_  = nullptr;
+//        AVCodecContext* video_codec_context_  = nullptr;
+//        AVStream* video_stream_  = nullptr;
+//        AVCodec* audio_codec_  = nullptr;
+//        AVCodecContext* audio_codec_context_  = nullptr;
+//        AVStream* audio_stream_  = nullptr;
+//        // io缓冲初始化
+//        uint8_t *avio_ctx_buffer = nullptr;
+//        size_t avio_ctx_buffer_size = 4096;
 
-        int video_index_ = -1;
-        int audio_index_ = -1;
-        // ts文件参数初始化
-        buffer_data bd = {(uint8_t*)file->data(), (size_t)file->dataLength()};
+//        int video_index_ = -1;
+//        int audio_index_ = -1;
+//        // ts文件参数初始化
+//        buffer_data bd = {(uint8_t*)file->data(), (size_t)file->dataLength()};
 
-        fmt_ctx = avformat_alloc_context();
-        avio_ctx_buffer = (uint8_t *)av_malloc(avio_ctx_buffer_size);
-        avio_ctx = avio_alloc_context(avio_ctx_buffer, avio_ctx_buffer_size,
-                                      0, &bd, read_packet, NULL, NULL);
-        fmt_ctx->pb = avio_ctx;
-        //fmt_ctx->flags = AVFMT_FLAG_CUSTOM_IO;
-        if (avformat_open_input(&fmt_ctx, "", NULL, NULL) < 0)
-        {
-            fprintf(stderr, "Could not open input\n");
-            return 0 ;
-        }
+//        fmt_ctx = avformat_alloc_context();
+//        avio_ctx_buffer = (uint8_t *)av_malloc(avio_ctx_buffer_size);
+//        avio_ctx = avio_alloc_context(avio_ctx_buffer, avio_ctx_buffer_size,
+//                                      0, &bd, read_packet, NULL, NULL);
+//        fmt_ctx->pb = avio_ctx;
+//        //fmt_ctx->flags = AVFMT_FLAG_CUSTOM_IO;
+//        if (avformat_open_input(&fmt_ctx, "", NULL, NULL) < 0)
+//        {
+//            fprintf(stderr, "Could not open input\n");
+//            return 0 ;
+//        }
 
-        for (unsigned int i = 0; i < fmt_ctx->nb_streams; i++) {
-            if (fmt_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
-                video_index_ = i;
-                qDebug() << "Find video stream.videoIndex: " << video_index_;
-                continue;
-            }
-        }
-        if (video_index_ >= 0) {
-            player->setHasVideo(true);
-            video_stream_ = fmt_ctx->streams[video_index_];
-            // 配置packet舍弃策略
-            fmt_ctx->streams[video_index_]->discard = AVDISCARD_DEFAULT;
-            // 根据视频流创建视频解码器上下文
-            video_codec_context_ = avcodec_alloc_context3(NULL);
-            if (avcodec_parameters_to_context(
-                        video_codec_context_,
-                        fmt_ctx->streams[video_index_]->codecpar) < 0) {
-                qDebug() << "Fill video decoder context failed.";
-                return -1;
-            }
-            // 寻找视频解码器
-            video_codec_ = avcodec_find_decoder(video_codec_context_->codec_id);
-            if (video_codec_ == NULL) {
-                qDebug() << "Video decoder not found.";
-                return -1;
-            }
-            // 打开视频解码器待用
-            if (avcodec_open2(video_codec_context_, video_codec_, NULL) < 0) {
-                qDebug() << "Open video decoder failed.";
-                return -1;
-            }
-        }
-        if (audio_index_ >= 0) {
-            player->setHasAudio(true);
-            audio_stream_ = fmt_ctx->streams[audio_index_];
-            fmt_ctx->streams[audio_index_]->discard = AVDISCARD_DEFAULT;
-            audio_codec_context_ = avcodec_alloc_context3(NULL);
-            if (avcodec_parameters_to_context(
-                        audio_codec_context_,
-                        fmt_ctx->streams[audio_index_]->codecpar) < 0) {
-                qDebug() << "Fill audio decoder failed.";
-                return -1;
-            }
-            audio_codec_ = avcodec_find_decoder(audio_codec_context_->codec_id);
-            if (audio_codec_ == NULL) {
-                qDebug() << "Audio Decoder not found.";
-                return -1;
-            }
-            if (avcodec_open2(audio_codec_context_, audio_codec_, NULL) < 0) {
-                qDebug() << "Open audio decoder failed.";
-                return -1;
-            }
-        }
-        AVPacket pkt;
-        AVFrame* frame = av_frame_alloc();
-        while (1) {
-            int ret = 0;
-            ret = av_read_frame(fmt_ctx, &pkt);
-            if (pkt.stream_index != video_index_ &&
-                    pkt.stream_index != audio_index_) {
-                av_packet_unref(&pkt);
-                continue;
-            }
-            if (ret < 0) {
-                //qDebug() << av_err2str(ret);
-                if (ret == -541478725) {
-                    break;
-                }
-                else {
-                    continue;
-                }
-            }
-            avcodec_send_packet(video_codec_context_, &pkt);
-            ret = avcodec_receive_frame(video_codec_context_, frame);
-            if (pkt.stream_index == video_index_) {
-                player->videoQueue_->enqueue(frame);
-            }
-            else {
-                player->audioQueue_->enqueue(frame);
-            }
-            av_packet_unref(&pkt);
-        }
-        avformat_free_context(fmt_ctx);
-        av_frame_free(&frame);
-        decodeIndex += 1;
-        player->setDecodeIndex(decodeIndex);
-    }
-    return 0;
-}
+//        for (unsigned int i = 0; i < fmt_ctx->nb_streams; i++) {
+//            if (fmt_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+//                video_index_ = i;
+//                qDebug() << "Find video stream.videoIndex: " << video_index_;
+//                continue;
+//            }
+//        }
+//        if (video_index_ >= 0) {
+//            player->setHasVideo(true);
+//            video_stream_ = fmt_ctx->streams[video_index_];
+//            // 配置packet舍弃策略
+//            fmt_ctx->streams[video_index_]->discard = AVDISCARD_DEFAULT;
+//            // 根据视频流创建视频解码器上下文
+//            video_codec_context_ = avcodec_alloc_context3(NULL);
+//            if (avcodec_parameters_to_context(
+//                        video_codec_context_,
+//                        fmt_ctx->streams[video_index_]->codecpar) < 0) {
+//                qDebug() << "Fill video decoder context failed.";
+//                return -1;
+//            }
+//            // 寻找视频解码器
+//            video_codec_ = avcodec_find_decoder(video_codec_context_->codec_id);
+//            if (video_codec_ == NULL) {
+//                qDebug() << "Video decoder not found.";
+//                return -1;
+//            }
+//            // 打开视频解码器待用
+//            if (avcodec_open2(video_codec_context_, video_codec_, NULL) < 0) {
+//                qDebug() << "Open video decoder failed.";
+//                return -1;
+//            }
+//        }
+//        if (audio_index_ >= 0) {
+//            player->setHasAudio(true);
+//            audio_stream_ = fmt_ctx->streams[audio_index_];
+//            fmt_ctx->streams[audio_index_]->discard = AVDISCARD_DEFAULT;
+//            audio_codec_context_ = avcodec_alloc_context3(NULL);
+//            if (avcodec_parameters_to_context(
+//                        audio_codec_context_,
+//                        fmt_ctx->streams[audio_index_]->codecpar) < 0) {
+//                qDebug() << "Fill audio decoder failed.";
+//                return -1;
+//            }
+//            audio_codec_ = avcodec_find_decoder(audio_codec_context_->codec_id);
+//            if (audio_codec_ == NULL) {
+//                qDebug() << "Audio Decoder not found.";
+//                return -1;
+//            }
+//            if (avcodec_open2(audio_codec_context_, audio_codec_, NULL) < 0) {
+//                qDebug() << "Open audio decoder failed.";
+//                return -1;
+//            }
+//        }
+//        AVPacket pkt;
+//        AVFrame* frame = av_frame_alloc();
+//        while (1) {
+//            int ret = 0;
+//            ret = av_read_frame(fmt_ctx, &pkt);
+//            if (pkt.stream_index != video_index_ &&
+//                    pkt.stream_index != audio_index_) {
+//                av_packet_unref(&pkt);
+//                continue;
+//            }
+//            if (ret < 0) {
+//                //qDebug() << av_err2str(ret);
+//                if (ret == -541478725) {
+//                    break;
+//                }
+//                else {
+//                    continue;
+//                }
+//            }
+//            avcodec_send_packet(video_codec_context_, &pkt);
+//            ret = avcodec_receive_frame(video_codec_context_, frame);
+//            if (pkt.stream_index == video_index_) {
+//                player->videoQueue_->enqueue(frame);
+//            }
+//            else {
+//                player->audioQueue_->enqueue(frame);
+//            }
+//            av_packet_unref(&pkt);
+//        }
+//        avformat_free_context(fmt_ctx);
+//        av_frame_free(&frame);
+//        decodeIndex += 1;
+//        player->setDecodeIndex(decodeIndex);
+//    }
+//    return 0;
+//}
 
 int VideoPlayer::videoPlay(void *arg)
 {
@@ -265,10 +284,10 @@ int VideoPlayer::videoPlay(void *arg)
             SDL_Delay(5);
             continue;
         }
-        if (player->videoQueue_->queueSize() <= 0) {
+        if (!player->vRoll->canRead()) {
             continue;
         }
-        frame = player->videoQueue_->dequeue();
+        frame = player->vRoll->read();
         if (player->swsContext_ == nullptr) {
             player->swsContext_ = sws_alloc_context();
             player->swsContext_ = sws_getContext(frame->width,
@@ -298,24 +317,50 @@ int VideoPlayer::videoPlay(void *arg)
         QImage img = (QImage(frame_rgb->data[0],
                       frame->width,
                       frame->height,
-                      QImage::Format_RGBA8888//QImage::Format_RGBX64
+                      QImage::Format_RGBA8888
                       ).copy());
+        emit player->onUpdateImage(img);
     }
+    av_frame_free(&frame_rgb);
+    return 0;
+}
+
+
+void VideoPlayer::setHttpFunctions(HttpFunctions *value)
+{
+    httpFunctions_ = value;
+    connect(this, SIGNAL(requestTsFile(QString, TsFile*, QString)),
+            httpFunctions_, SLOT(onRequestTsFile(QString, TsFile*, QString)));
+
+}
+
+void VideoPlayer::setReplyParser(ReplyParser *value)
+{
+    replyParser_ = value;
+    connect(replyParser_, SIGNAL(m3u8ReplyDone(bool, HlsIndex*)),
+            this, SLOT(onM3u8ReplyDone(bool, HlsIndex*)));
+    connect(replyParser_, SIGNAL(mediaInfoReplyDone(bool, int, int)),
+            this, SLOT(onMediaInfoReplyDone(bool, int, int)));
+    connect(replyParser_, SIGNAL(tsFetched(TsFile*)),
+            this, SLOT(onTsFetched(TsFile*)));
 }
 
 void VideoPlayer::onM3u8ReplyDone(bool success, HlsIndex *index)
 {
     if (success) {
-        index_ = index;
+        setHlsIndex(index);
     }
     else {
         index_ = nullptr;
     }
+    setState(PAUSE);
     tsFetcher_ = SDL_CreateThread(tsFetch, "tsFetch", this);
-    tsDecoder_ = SDL_CreateThread(tsDecode, "tsDecode", this);
-    if (hasVideo) {
-        videoThread_ = SDL_CreateThread(videoPlay, "videoPlay", this);
-    }
+    videoThread_ = SDL_CreateThread(videoPlay, "videoPlay", this);
+    setState(PLAY);
+    //tsDecoder_ = SDL_CreateThread(tsDecode, "tsDecode", this);
+//    if (hasVideo) {
+//        videoThread_ = SDL_CreateThread(videoPlay, "videoPlay", this);
+//    }
 }
 
 void VideoPlayer::onMediaInfoReplyDone(bool success, int nbFrames, int frameRate)
@@ -326,7 +371,134 @@ void VideoPlayer::onMediaInfoReplyDone(bool success, int nbFrames, int frameRate
     }
 }
 
-void VideoPlayer::onUpdateFrame(QImage image)
+void VideoPlayer::onTsFetched(TsFile *ts)
+{
+    if (!ts->fetched()) {
+        return;
+    }
+    AVFormatContext *fmt_ctx = nullptr;
+    AVIOContext *avio_ctx = nullptr;
+    AVCodec* video_codec_  = nullptr;
+    AVCodecContext* video_codec_context_  = nullptr;
+    AVStream* video_stream_  = nullptr;
+    AVCodec* audio_codec_  = nullptr;
+    AVCodecContext* audio_codec_context_  = nullptr;
+    AVStream* audio_stream_  = nullptr;
+    // io缓冲初始化
+    uint8_t *avio_ctx_buffer = nullptr;
+    size_t avio_ctx_buffer_size = 4096;
+
+    int video_index_ = -1;
+    int audio_index_ = -1;
+    // ts文件参数初始化
+    buffer_data bd = {(uint8_t*)ts->data(), (size_t)ts->dataLength()};
+
+    fmt_ctx = avformat_alloc_context();
+    avio_ctx_buffer = (uint8_t *)av_malloc(avio_ctx_buffer_size);
+    avio_ctx = avio_alloc_context(avio_ctx_buffer, avio_ctx_buffer_size,
+                                  0, &bd, read_packet, NULL, NULL);
+    fmt_ctx->pb = avio_ctx;
+    //fmt_ctx->flags = AVFMT_FLAG_CUSTOM_IO;
+    if (avformat_open_input(&fmt_ctx, "", NULL, NULL) < 0)
+    {
+        fprintf(stderr, "Could not open input\n");
+        return;
+    }
+
+    for (unsigned int i = 0; i < fmt_ctx->nb_streams; i++) {
+        if (fmt_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+            video_index_ = i;
+            qDebug() << "Find video stream.videoIndex: " << video_index_;
+            continue;
+        }
+        if (fmt_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+            audio_index_ = i;
+            qDebug() << "Find video stream.audio_index_: " << audio_index_;
+            continue;
+        }
+    }
+    if (video_index_ >= 0) {
+        video_stream_ = fmt_ctx->streams[video_index_];
+        // 配置packet舍弃策略
+        fmt_ctx->streams[video_index_]->discard = AVDISCARD_DEFAULT;
+        // 根据视频流创建视频解码器上下文
+        video_codec_context_ = avcodec_alloc_context3(NULL);
+        if (avcodec_parameters_to_context(
+                    video_codec_context_,
+                    fmt_ctx->streams[video_index_]->codecpar) < 0) {
+            qDebug() << "Fill video decoder context failed.";
+            return;
+        }
+        // 寻找视频解码器
+        video_codec_ = avcodec_find_decoder(video_codec_context_->codec_id);
+        if (video_codec_ == NULL) {
+            qDebug() << "Video decoder not found.";
+            return;
+        }
+        // 打开视频解码器待用
+        if (avcodec_open2(video_codec_context_, video_codec_, NULL) < 0) {
+            qDebug() << "Open video decoder failed.";
+            return;
+        }
+    }
+    if (audio_index_ >= 0) {
+        audio_stream_ = fmt_ctx->streams[audio_index_];
+        fmt_ctx->streams[audio_index_]->discard = AVDISCARD_DEFAULT;
+        audio_codec_context_ = avcodec_alloc_context3(NULL);
+        if (avcodec_parameters_to_context(
+                    audio_codec_context_,
+                    fmt_ctx->streams[audio_index_]->codecpar) < 0) {
+            qDebug() << "Fill audio decoder failed.";
+            return;
+        }
+        audio_codec_ = avcodec_find_decoder(audio_codec_context_->codec_id);
+        if (audio_codec_ == NULL) {
+            qDebug() << "Audio Decoder not found.";
+            return;
+        }
+        if (avcodec_open2(audio_codec_context_, audio_codec_, NULL) < 0) {
+            qDebug() << "Open audio decoder failed.";
+            return;
+        }
+    }
+    AVPacket pkt;
+    QVector<AVFrame*>* vFrameVector = new QVector<AVFrame*>();
+    QVector<AVFrame*>* aFrameVector = new QVector<AVFrame*>();
+    while (1) {
+        int ret = 0;
+        ret = av_read_frame(fmt_ctx, &pkt);
+        if (pkt.stream_index != video_index_ &&
+                pkt.stream_index != audio_index_) {
+            av_packet_unref(&pkt);
+            continue;
+        }
+        if (ret < 0) {
+            //qDebug() << av_err2str(ret);
+            if (ret == -541478725) {
+                break;
+            }
+            else {
+                continue;
+            }
+        }
+        AVFrame* frame = av_frame_alloc();
+        avcodec_send_packet(video_codec_context_, &pkt);
+        ret = avcodec_receive_frame(video_codec_context_, frame);
+        if (pkt.stream_index == video_index_) {
+            vFrameVector->append(frame);
+        }
+        else {
+            aFrameVector->append(frame);
+        }
+        av_packet_unref(&pkt);
+    }
+    vRoll->setTsBlock(ts->tsIndex(), vFrameVector);
+    aRoll->setTsBlock(ts->tsIndex(), aFrameVector);
+    avformat_free_context(fmt_ctx);
+    //av_frame_free(&frame);
+}
+
+void VideoPlayer::onUpdateImage(QImage image)
 {
     image_ = image;
     update();

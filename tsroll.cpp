@@ -1,0 +1,187 @@
+#include "tsroll.h"
+
+TsRoll::TsRoll(int blockCount)
+    : tsBlockIndex_(0),
+      tsFrameIndex_(0)
+{
+    roll = QVector<QVector<AVFrame*>*>(blockCount);
+    for (int i = 0; i < roll.size(); i++) {
+        roll[i] = nullptr;
+    }
+}
+
+void TsRoll::setTsBlock(int index, QVector<AVFrame*>* block)
+{
+    QWriteLocker locker(&lock);
+    roll[index] = block;
+}
+
+bool TsRoll::isBlockEmpty(int blockIdx)
+{
+    return !hasBlock(blockIdx) || roll[blockIdx]->size() == 0;
+}
+
+bool TsRoll::isEmpty()
+{
+    return roll.size() == 0;
+}
+
+int TsRoll::blockSize(int blockIdx)
+{
+    return hasBlock(blockIdx) ? roll[blockIdx]->size() : 0;
+}
+
+int TsRoll::size()
+{
+    return roll.size();
+}
+
+void TsRoll::emptyBlock(int blockIdx)
+{
+    QVector<AVFrame*>* block = roll.at(blockIdx);
+    if (block != nullptr) {
+        for(int i = 0; i < block->size(); i++) {
+            AVFrame* frame = block->at(i);
+            av_frame_free(&frame);
+        }
+    }
+    delete block;
+    return;
+}
+
+void TsRoll::empty()
+{
+    for(int i = 0; i < roll.size(); i++) {
+        QVector<AVFrame*>* block = roll.at(i);
+        if (block != nullptr) {
+            for(int i = 0; i < block->size(); i++) {
+                AVFrame* frame = block->at(i);
+                av_frame_free(&frame);
+            }
+        }
+        delete block;
+    }
+}
+
+AVFrame *TsRoll::read(int blockIdx, int frameIdx)
+{
+    if (blockIdx < 0 || blockIdx >= roll.size()) {
+        return nullptr;
+    }
+    if (!hasBlock(blockIdx)) {
+        return nullptr;
+    }
+    if (frameIdx < 0 ||frameIdx >= roll[blockIdx]->size()) {
+        return nullptr;
+    }
+    QReadLocker locker(&lock);
+    AVFrame* frame = roll.at(blockIdx)->at(frameIdx);
+    return frame;
+}
+
+AVFrame *TsRoll::read()
+{
+    QReadLocker locker(&lock);
+    AVFrame* frame = roll.at(tsBlockIndex_)->at(tsFrameIndex_);
+    return frame;
+}
+
+void TsRoll::nextFrame()
+{
+    if (tsFrameIndex_ + 1 < roll.at(tsBlockIndex_)->size()) {
+        tsFrameIndex_ += 1;
+    }
+    else {
+        if (!isLastBlock()) {
+            nextBlock();
+            tsFrameIndex_ = 0;
+        }
+    }
+}
+
+void TsRoll::previousFrame()
+{
+    if (tsFrameIndex_ - 1 >= 0) {
+        tsFrameIndex_ -= 1;
+    }
+    else {
+        if (!isFirstBlock()) {
+            previousBlock();
+            tsFrameIndex_ = roll.at(tsBlockIndex_)->size() - 1;
+        }
+    }
+}
+
+void TsRoll::nextBlock()
+{
+    if (tsBlockIndex_ + 1 < roll.size()){
+        tsBlockIndex_ += 1;
+    }
+}
+
+void TsRoll::previousBlock()
+{
+    if (tsBlockIndex_ - 1 >= 0) {
+        tsBlockIndex_ -= 1;
+    }
+}
+
+bool TsRoll::isFirstFrame()
+{
+    return tsBlockIndex_ == 0 && tsFrameIndex_ == 0;
+}
+
+bool TsRoll::isLastFrame()
+{
+    return tsBlockIndex_ == roll.size() &&
+            tsFrameIndex_ == roll.at(tsBlockIndex_)->size();
+}
+
+bool TsRoll::isFirstBlock()
+{
+    return tsBlockIndex_ == 0;
+}
+
+bool TsRoll::isLastBlock()
+{
+    return tsBlockIndex_ == roll.size();
+}
+
+bool TsRoll::seek(int blockIdx, int frameIdx)
+{
+    if (!canRead(blockIdx, frameIdx)) {
+        return false;
+    }
+    else {
+        tsBlockIndex_ = blockIdx;
+        tsFrameIndex_ = frameIdx;
+        return true;
+    }
+}
+
+bool TsRoll::hasBlock(int blockIdx)
+{
+    return roll.at(blockIdx) == nullptr;
+}
+
+bool TsRoll::canRead(int blockIdx, int frameIdx)
+{
+    if (blockIdx < 0 || blockIdx >= roll.size()) {
+        return false;
+    }
+    if (!hasBlock(blockIdx)) {
+        return false;
+    }
+    if (frameIdx < 0 ||frameIdx >= roll[blockIdx]->size()) {
+        return false;
+    }
+    return roll.at(blockIdx)->at(frameIdx) != nullptr;
+
+}
+
+bool TsRoll::canRead()
+{
+    return roll.at(tsBlockIndex_) != nullptr &&
+            roll.at(tsBlockIndex_)->at(tsFrameIndex_) != nullptr;
+}
+

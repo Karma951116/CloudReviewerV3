@@ -20,7 +20,6 @@ SOURCES += \
         formatchecker.cpp \
         formattransformer.cpp \
         framequeue.cpp \
-        framequeue.cpp \
         hlsindex.cpp \
         httpfunctions.cpp \
         main.cpp \
@@ -29,6 +28,7 @@ SOURCES += \
         replyparser.cpp \
         runtimecontext.cpp \
         tsfile.cpp \
+        tsroll.cpp \
         user.cpp \
         videoplayer.cpp
 
@@ -62,7 +62,6 @@ HEADERS += \
     formatchecker.h \
     formattransformer.h \
     framequeue.h \
-    framequeue.h \
     hlsindex.h \
     httpfunctions.h \
     projectlistmodel.h \
@@ -70,6 +69,7 @@ HEADERS += \
     replyparser.h \
     runtimecontext.h \
     tsfile.h \
+    tsroll.h \
     user.h \
     videoplayer.h
 

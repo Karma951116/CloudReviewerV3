@@ -7,7 +7,11 @@
 #include <QReadWriteLock>
 
 #include "hlsindex.h"
-#include "framequeue.h"
+//#include "framequeue.h"
+#include "replyparser.h"
+#include "httpfunctions.h"
+#include "tsroll.h"
+#include "SDL.h"
 
 extern "C"
 {
@@ -32,6 +36,8 @@ public:
     Q_ENUM(PlayState);
     VideoPlayer();
 
+    Q_INVOKABLE void play();
+    Q_INVOKABLE void payse();
     HlsIndex *getHlsIndex() const;
     void setHlsIndex(HlsIndex *index);
 
@@ -44,14 +50,19 @@ public:
     int getDecodeIndex() const;
     void setDecodeIndex(int decodeIndex);
     static int read_packet(void *opaque, uint8_t *buf, int buf_size);
-    FrameQueue* videoQueue_;
-    FrameQueue* audioQueue_;
+    //FrameQueue* videoQueue_;
+    //FrameQueue* audioQueue_;
+    TsRoll* vRoll;
+    TsRoll* aRoll;
 
     bool getHasVideo() const;
     void setHasVideo(bool value);
 
     bool getHasAudio() const;
     void setHasAudio(bool value);
+
+    Q_INVOKABLE void setReplyParser(ReplyParser *value);
+    Q_INVOKABLE void setHttpFunctions(HttpFunctions *value);
 
 protected:
     virtual void paint(QPainter* painter);
@@ -81,16 +92,19 @@ private:
     static int tsDecode(void *arg);
 
     static int videoPlay(void *arg);
-    QMap<int, QPair<int, int>> timeMap;
+
+    ReplyParser* replyParser_;
+    HttpFunctions* httpFunctions_;
 
 signals:
+    void updateImage(QImage image);
     void requestTsFile(QString tsName, TsFile* TS, QString url = nullptr);
-    void requestMediaInfo(QString tsName, TsFile* TS, QString url = nullptr);
 public slots:
     void onM3u8ReplyDone(bool success, HlsIndex* index);
     void onMediaInfoReplyDone(bool success, int nbFrames, int frameRate);
+    void onTsFetched(TsFile* ts);
 private slots:
-    void onUpdateFrame(QImage image);
+    void onUpdateImage(QImage image);
 };
 
 #endif // VIDEOPLAYER_H

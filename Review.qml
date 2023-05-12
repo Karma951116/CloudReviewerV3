@@ -236,9 +236,16 @@ Rectangle {
 
         VideoPlayer {
             id: video_player
-            width: 200
-            height: 200
+            width: 1280
+            height: 798
             anchors.centerIn: parent
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    video_player.play();
+                }
+            }
         }
 
         //Player
@@ -252,9 +259,14 @@ Rectangle {
         anchors.right: parent.right
         anchors.rightMargin: 8
     }
-    Connections {
-        target: replyParser
-        onM3u8ReplyDone: VideoPlayer.onM3u8ReplyDone
-        onMediaInfoReplyDone: VideoPlayer.onMediaInfoReplyDone
+    Component.onCompleted: {
+        video_player.setReplyParser(replyParser);
+        video_player.setHttpFunctions(httpFunctions);
     }
+
+//    Connections {
+//        target: replyParser
+//        onM3u8ReplyDone: video_player.onM3u8ReplyDone()
+//        onMediaInfoReplyDone: video_player.onMediaInfoReplyDone()
+//    }
 }
