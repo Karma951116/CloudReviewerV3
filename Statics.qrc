@@ -1,0 +1,65 @@
+<RCC>
+    <qresource prefix="/icon">
+        <file alias="arrow_down">statics/icon/arrow_down.png</file>
+        <file alias="arrow_right">statics/icon/arrow_right.png</file>
+        <file>statics/icon/audio.png</file>
+        <file>statics/icon/backward.png</file>
+        <file alias="bell">statics/icon/bell.png</file>
+        <file>statics/icon/canvas_tool_arrow.png</file>
+        <file>statics/icon/canvas_tool_clear.png</file>
+        <file>statics/icon/canvas_tool_pen.png</file>
+        <file>statics/icon/canvas_tool_rect.png</file>
+        <file>statics/icon/canvas_tool_redo.png</file>
+        <file>statics/icon/canvas_tool_undo.png</file>
+        <file alias="company_checked">statics/icon/checked.png</file>
+        <file alias="titlebar_close">statics/icon/close.png</file>
+        <file>statics/icon/close_ellipse_red.png</file>
+        <file>statics/icon/comment_tool_at.png</file>
+        <file>statics/icon/comment_tool_reference.png</file>
+        <file>statics/icon/comment_tool_stamp.png</file>
+        <file>statics/icon/delete_comment.png</file>
+        <file>statics/icon/delete_comment.svg</file>
+        <file>statics/icon/export.png</file>
+        <file alias="export.svg">statics/icon/export.svg</file>
+        <file alias="file_image_audio">statics/icon/file_image_audio.png</file>
+        <file alias="file_type_audio">statics/icon/file_type_audio.png</file>
+        <file alias="file_image_other">statics/icon/file_type_other.png</file>
+        <file alias="file_type_image">statics/icon/file_type_pic.png</file>
+        <file alias="file_type_video">statics/icon/file_type_video.png</file>
+        <file alias="folder_icon">statics/icon/folder_icon.png</file>
+        <file>statics/icon/forward.png</file>
+        <file>statics/icon/fullscreen.png</file>
+        <file>statics/icon/group_btn.png</file>
+        <file alias="test_group_mark">statics/icon/group_mark.png</file>
+        <file alias="titlebar_maximize">statics/icon/maximize.png</file>
+        <file>statics/icon/media_time_indicator.png</file>
+        <file alias="menu">statics/icon/menu.png</file>
+        <file alias="titlebar_minimize">statics/icon/minimize.png</file>
+        <file alias="monitor">statics/icon/monitor.png</file>
+        <file>statics/icon/new_comment.png</file>
+        <file>statics/icon/new_comment.svg</file>
+        <file>statics/icon/pause.png</file>
+        <file>statics/icon/play.png</file>
+        <file alias="project_btn">statics/icon/project_btn.png</file>
+        <file alias="pwd_display">statics/icon/pwd_display.png</file>
+        <file alias="pwd_hide">statics/icon/pwd_hide.png</file>
+        <file alias="login_logo">statics/icon/review_logo.png</file>
+        <file>statics/icon/review_logo_blue.png</file>
+        <file>statics/icon/search.png</file>
+        <file alias="company_switcher">statics/icon/switch.png</file>
+        <file>statics/icon/target.png</file>
+        <file alias="video">statics/icon/video.png</file>
+        <file>statics/icon/volume.png</file>
+        <file>statics/icon/volume_zero.png</file>
+    </qresource>
+    <qresource prefix="/texture">
+        <file alias="filecard_bg">statics/texture/card_file_background.png</file>
+        <file alias="login_bg">statics/texture/login_background.png</file>
+    </qresource>
+    <qresource prefix="/font">
+        <file alias="PingFang SC Regular.ttf">statics/font/PingFang SC Regular.ttf</file>
+    </qresource>
+    <qresource prefix="/settings">
+        <file alias="Prompt">Prompt.json</file>
+    </qresource>
+</RCC>

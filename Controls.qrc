@@ -1,0 +1,35 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+    </qresource>
+    <qresource prefix="/Page">
+        <file>Browse.qml</file>
+        <file>Login.qml</file>
+        <file>Review.qml</file>
+    </qresource>
+    <qresource prefix="/Base">
+        <file>CusFoldButton.qml</file>
+        <file>CusIconButton.qml</file>
+        <file>CusResizeComponent.qml</file>
+        <file>CusNavigator.qml</file>
+        <file>FileSercher.qml</file>
+        <file>FileSorter.qml</file>
+        <file>FileStateSelector.qml</file>
+    </qresource>
+    <qresource prefix="/Widget">
+        <file>TitleBar.qml</file>
+        <file>LoginPanel.qml</file>
+        <file>LoinPasswordInput.qml</file>
+        <file>LoginMessageInput.qml</file>
+        <file>CompanySelector.qml</file>
+        <file>ProjectSelector.qml</file>
+        <file>ModuleSelector.qml</file>
+        <file>UserCenter.qml</file>
+        <file>WindowButtonGroup.qml</file>
+        <file>FileBrowser.qml</file>
+        <file>FileBrowseToolbar.qml</file>
+        <file>FileBrowserItem.qml</file>
+        <file>VersionSelector.qml</file>
+        <file>CommentBrowser.qml</file>
+    </qresource>
+</RCC>
