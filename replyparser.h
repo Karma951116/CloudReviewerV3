@@ -1,10 +1,12 @@
-#ifndef REPLYPARSER_H
+﻿#ifndef REPLYPARSER_H
 #define REPLYPARSER_H
 
 #include <QObject>
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QImage>
+#include <QNetworkReply>
+
 #include <def.h>
 #include <hlsindex.h>
 
@@ -43,14 +45,14 @@ signals:
     void fileInfoReplyDone(bool success, QString status = NULL, QString netDiskPath = nullptr);
     void commentReplyDone(bool success, QJsonArray comments = QJsonArray());
     void m3u8ReplyDone(bool success, HlsIndex* index);
-    void mediaInfoReplyDone(bool success, int nbFrames, int frameRate);
+    void mediaInfoReplyDone(bool success, QJsonObject mediaInfo = QJsonObject());
     void tsFetched(TsFile* ts);
 
 
     void updateTokens(QString accessToken, QString refreshToken);
     void updateUser(QJsonObject userData);
 public slots:
-    void onReplied(ReplyMeta meta, QByteArray content);
+    void onReplied(ReplyMeta meta, QByteArray content, QNetworkReply::NetworkError error);
 
 private:
     QJsonObject originFileArr_;

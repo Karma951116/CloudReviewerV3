@@ -1,4 +1,4 @@
-#include <QGuiApplication>
+﻿#include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QModelIndex>
@@ -26,7 +26,6 @@ int main(int argc, char *argv[])
     //qmlRegisterType<FileEntity>("FileEntity",1,0,"FileEntity");
     qmlRegisterType<ReplyParser>("FileListModel",1,0,"FileListModel");
     qmlRegisterType<VideoPlayer>("VideoPlayer",1,0,"VideoPlayer");
-
 
     ConfigHelper* config = new ConfigHelper("Config.ini");
     HttpFunctions* httpFunctions = new HttpFunctions();

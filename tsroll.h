@@ -1,4 +1,4 @@
-#ifndef TSROLL_H
+﻿#ifndef TSROLL_H
 #define TSROLL_H
 
 #include <QObject>
@@ -35,6 +35,10 @@ public:
     bool hasBlock(int blockIdx);
     bool canRead(int blockIdx, int frameIdx);
     bool canRead();
+
+    int tsBlockIndex() const;
+
+    int tsFrameIndex() const;
 
 private:
     int tsBlockIndex_;

@@ -1,4 +1,4 @@
-#define DEBUG
+﻿#define DEBUG
 // #define PROD
 
 #include <QJsonDocument>
@@ -19,6 +19,8 @@ HttpFunctions::HttpFunctions()
 {
     connect(manager_, SIGNAL(finished(QNetworkReply*)),
             this, SLOT(onRequestFinished(QNetworkReply*)));
+    QNetworkConfiguration config = manager_->configuration();
+    config.setConnectTimeout(3000);
 #ifdef DEBUG
     address_ = "192.168.103.170";
     port_ = "6344";
@@ -187,7 +189,7 @@ void HttpFunctions::getIndex(QString url, QString auditFileFolderUuid)
 {
     QUrl qUrl;
 #ifdef DEBUG
-    qUrl.setUrl("https://h0.rzisytn.cn/ppvod/0B0253771AF21F7993D06AF6F3C56D6F.m3u8");
+    qUrl.setUrl("https://wolongzywcdn3.com:65/20220409/7kJCToaq/index.m3u8");
 #endif
 #ifdef PROD
     qUrl.setUrl("http://192.168.10.110:8069/cloudmovie/interrogationRoom/V1/index.m3u8");
@@ -199,7 +201,9 @@ void HttpFunctions::getIndex(QString url, QString auditFileFolderUuid)
     request_.setRawHeader("Cookie", session_id_.toUtf8());
     request_.setUrl(qUrl);
     map_.insert(manager_->get(request_), ReplyMeta{M3U8, 0});
-    //getMediaInfo(auditFileFolderUuid);
+#ifdef PROD
+    getMediaInfo(auditFileFolderUuid);
+#endif
 }
 
 void HttpFunctions::getMediaInfo(QString auditFileFolderUuid)
@@ -209,7 +213,7 @@ void HttpFunctions::getMediaInfo(QString auditFileFolderUuid)
     QUrlQuery qUrlQuery;
     qUrlQuery.addQueryItem("auditFileFolderUuid", auditFileFolderUuid);
     qUrl.setQuery(qUrlQuery);
-    request_.setRawHeader("Content-Type", "text/html");
+    request_.setRawHeader("Content-Type", "text/plain");
     request_.setRawHeader("Cookie", session_id_.toUtf8());
     request_.setUrl(qUrl);
     map_.insert(manager_->get(request_), ReplyMeta{MEDIA_INFO, 0});
@@ -219,7 +223,7 @@ void HttpFunctions::getTs(QString tsName, TsFile *ts, QString url = nullptr)
 {
     QUrl qUrl;
 #ifdef DEBUG
-    qUrl.setUrl("https://h0.rzisytn.cn/20220122/KogZSjGG/1000kb/hls/" + tsName);
+    qUrl.setUrl("https://wolongzywcdn3.com:65/20220409/7kJCToaq/" + tsName);
 #endif
 #ifdef PROD
     //qUrl.setUrl("http://192.168.10.110:8069/cloudmovie/interrogationRoom/V1/index.ts");
@@ -228,7 +232,7 @@ void HttpFunctions::getTs(QString tsName, TsFile *ts, QString url = nullptr)
     //qUrlQuery.addQueryItem("TsName", tsName);
     //qUrl.setQuery(qUrlQuery);
 #endif
-    request_.setRawHeader("Content-Type", "text/html");
+    request_.setRawHeader("Content-Type", "video/mp2t");
     request_.setRawHeader("Cookie", session_id_.toUtf8());
     request_.setUrl(qUrl);
     map_.insert(manager_->get(request_), ReplyMeta{TS, ts});
@@ -279,5 +283,5 @@ void HttpFunctions::onRequestTsFile(QString tsName, TsFile *Ts, QString url)
 void HttpFunctions::onRequestFinished(QNetworkReply *reply)
 {
     getSessionId(reply);
-    replied(map_.value(reply), reply->readAll());
+    replied(map_.value(reply), reply->readAll(), reply->error());
 }

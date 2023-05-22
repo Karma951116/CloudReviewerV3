@@ -1,4 +1,4 @@
-#include "replyparser.h"
+﻿#include "replyparser.h"
 #include "formattransformer.h"
 
 #include <QByteArray>
@@ -286,6 +286,11 @@ void ReplyParser::tsFileProcess(ReplyMeta meta, QByteArray data)
     ts->setData((uint8_t*)malloc(ts->dataLength()));
     memcpy(ts->data(), (uint8_t*)data.data(), ts->dataLength());
     ts->setFetched(true);
+//    QFile file("E:\\ts_test\\" + ts->fileName() + ".ts");
+//    file.open(QIODevice::WriteOnly);
+//    file.write(data);
+//    file.close();
+    qDebug() << "Fetched Ts: " << ts->fileName();
     tsFetched(ts);
 }
 
@@ -296,14 +301,29 @@ void ReplyParser::mediaInfoProcess(QByteArray data)
     re.indexIn(content);
     int nbFrames = re.cap(0).replace("nb_frames=", "").toInt();
     re.setPattern("avg_frame_rate=\\d*");
+    re.indexIn(content);
     QString avgFrameRate = re.cap(0).replace("avg_frame_rate=", "");
     QStringList tmp = avgFrameRate.split("/");
     int frameRate = tmp[0].toInt() / tmp[1].toInt();
-    mediaInfoReplyDone(true, nbFrames, frameRate);
+    re.setPattern("sample_rate=\\d*");
+    re.indexIn(content);
+    QString sampleRate = re.cap(0).replace("sample_rate=", "");
+    re.setPattern("channels=\\d*");
+    re.indexIn(content);
+    QString chennels = re.cap(0).replace("channels=", "");
+
+    QJsonObject ret, video, audio;
+    video["nbFrames"] = nbFrames;
+    video["frameRate"] = frameRate;
+    audio["sampleRate"] = sampleRate;
+    audio["chennels"] = chennels;
+    ret["video"] = video;
+    ret["audio"] = audio;
+    mediaInfoReplyDone(true, ret);
 }
 
 
-void ReplyParser::onReplied(ReplyMeta meta, QByteArray content)
+void ReplyParser::onReplied(ReplyMeta meta, QByteArray content, QNetworkReply::NetworkError error)
 {
     switch (meta.type) {
     case DataType::PIN:
@@ -334,6 +354,9 @@ void ReplyParser::onReplied(ReplyMeta meta, QByteArray content)
         m3u8IndexProcess(content);
         break;
     case DataType::TS:
+        if (error == QNetworkReply::TimeoutError) {
+            qDebug() << "ts timeout";
+        }
         tsFileProcess(meta, content);
         break;
     case DataType::MEDIA_INFO:

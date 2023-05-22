@@ -16,6 +16,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         companylistmodel.cpp \
         confighelper.cpp \
+        decodeworker.cpp \
         filelistmodel.cpp \
         formatchecker.cpp \
         formattransformer.cpp \
@@ -27,6 +28,7 @@ SOURCES += \
         promptprovider.cpp \
         replyparser.cpp \
         runtimecontext.cpp \
+        sonic.c \
         tsfile.cpp \
         tsroll.cpp \
         user.cpp \
@@ -57,6 +59,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     companylistmodel.h \
     confighelper.h \
+    decodeworker.h \
     def.h \
     filelistmodel.h \
     formatchecker.h \
@@ -68,6 +71,7 @@ HEADERS += \
     promptprovider.h \
     replyparser.h \
     runtimecontext.h \
+    sonic.h \
     tsfile.h \
     tsroll.h \
     user.h \

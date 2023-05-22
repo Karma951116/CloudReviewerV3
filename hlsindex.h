@@ -41,6 +41,12 @@ public:
     int getFrameRate() const;
     void setFrameRate(int frameRate);
 
+    int getSampleRate() const;
+    void setSampleRate(int sampleRate);
+
+    int getChennels() const;
+    void setChennels(int chennels);
+
 private:
     QString url_;
     char* data_;
@@ -52,6 +58,8 @@ private:
     double duration_;
     int nbFrames_;
     int frameRate_;
+    int sampleRate_;
+    int chennels_;
 
 public slots:
     void onFileFetchChanged(bool fetched);

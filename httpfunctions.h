@@ -1,4 +1,4 @@
-#ifndef HTTPFUNCTIONS_H
+﻿#ifndef HTTPFUNCTIONS_H
 #define HTTPFUNCTIONS_H
 
 #include <QObject>
@@ -50,7 +50,8 @@ private:
     void getSessionId(QNetworkReply* reply);
 
 signals:
-    void replied(ReplyMeta meta, QByteArray content);
+    void replied(ReplyMeta meta, QByteArray content,
+                 QNetworkReply::NetworkError = QNetworkReply::NoError);
 public slots:
     void onUpdateTokens(QString accessToken, QString refreshToken);
     void onRequestTsFile(QString tsName, TsFile* Ts, QString url = nullptr);

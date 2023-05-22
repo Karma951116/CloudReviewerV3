@@ -1,10 +1,12 @@
-#ifndef VIDEOPLAYER_H
+﻿#ifndef VIDEOPLAYER_H
 #define VIDEOPLAYER_H
 
 #include <QObject>
 #include <QQuickPaintedItem>
 #include <QPainter>
 #include <QReadWriteLock>
+#include <QThreadPool>
+#include <QTimer>
 
 #include "hlsindex.h"
 //#include "framequeue.h"
@@ -12,6 +14,8 @@
 #include "httpfunctions.h"
 #include "tsroll.h"
 #include "SDL.h"
+#include "decodeworker.h"
+#include "sonic.h"
 
 extern "C"
 {
@@ -22,6 +26,7 @@ extern "C"
 #include "libavutil/opt.h"
 #include "libavcodec/avfft.h"
 #include "libavutil/imgutils.h"
+#include "libswresample/swresample.h"
 }
 
 class VideoPlayer : public QQuickPaintedItem
@@ -33,27 +38,37 @@ public:
         PAUSE,
         STOP
     };
+
+
+    struct SyncMeta {
+        double videoClock;
+        double audioClock;
+
+    };
+
     Q_ENUM(PlayState);
     VideoPlayer();
 
     Q_INVOKABLE void play();
-    Q_INVOKABLE void payse();
+    Q_INVOKABLE void pause();
     HlsIndex *getHlsIndex() const;
     void setHlsIndex(HlsIndex *index);
 
     int getFetchIndex() const;
     void setFetchIndex(int fetchIndex);
 
-    PlayState getState() const;
-    void setState(const PlayState &state);
+    Q_INVOKABLE PlayState getState() const;
+    Q_INVOKABLE void setState(const PlayState &state);
 
     int getDecodeIndex() const;
     void setDecodeIndex(int decodeIndex);
-    static int read_packet(void *opaque, uint8_t *buf, int buf_size);
+//    static int read_packet(void *opaque, uint8_t *buf, int buf_size);
     //FrameQueue* videoQueue_;
     //FrameQueue* audioQueue_;
     TsRoll* vRoll;
     TsRoll* aRoll;
+
+    SyncMeta* syncMeta;
 
     bool getHasVideo() const;
     void setHasVideo(bool value);
@@ -81,30 +96,54 @@ private:
     unsigned char* swsOutBuffer_;
     bool hasVideo;
     bool hasAudio;
+    VideoMeta* vMeta_;
+    AudioMeta* aMeta_;
 
-    SDL_Thread* tsFetcher_;
-    SDL_Thread* tsDecoder_;
     SDL_Thread* videoThread_;
 
+    //QThreadPool fetchPool_;
+    //QThreadPool decodePool_;
     int fetchIndex_;
+    int fetcherCount_;
     static int tsFetch(void *arg);
-    int decodeIndex_;
-    static int tsDecode(void *arg);
+    static int tsFetchWorker(void *arg);
 
     static int videoPlay(void *arg);
+
+    int openAudio();
+    static void audioCallBack(void* userdata, quint8* stream, int SDL_BufferSize);
+    int audioResample();
+    SDL_AudioSpec desiredSpec_, hardwareSpec_;
+    uint8_t* audioBuffer_;
+    int audioBufferSize_;
+    uint8_t* audioBufferPtr_;
+    qint32 audioBufferRest_;
+    int audioBytePerSec_;
+    int audioDeviceId_;
+    sonicStream sonicHandler_;
+    int volume_;
+    float speed_;
+    SwrContext* swrContext_;
 
     ReplyParser* replyParser_;
     HttpFunctions* httpFunctions_;
 
+    QTimer* checkTimer_;
 signals:
     void updateImage(QImage image);
     void requestTsFile(QString tsName, TsFile* TS, QString url = nullptr);
+    void firstTsDecoded();
 public slots:
     void onM3u8ReplyDone(bool success, HlsIndex* index);
-    void onMediaInfoReplyDone(bool success, int nbFrames, int frameRate);
-    void onTsFetched(TsFile* ts);
+    void onMediaInfoReplyDone(bool success, QJsonObject ret);
+//    void onTsFetched(TsFile* ts);
 private slots:
     void onUpdateImage(QImage image);
+    void onFirstTsDecoded();
+    void onDecodeCheck();
+    void onFetchCheck();
+    void onDecodeFinished(QVector<AVFrame*>* vFrameVector, QVector<AVFrame*>* aFrameVector,
+                          int blockIndex, QVariant vMeta, QVariant aMeta);
 };
 
 #endif // VIDEOPLAYER_H

@@ -1,4 +1,4 @@
-#include "tsroll.h"
+﻿#include "tsroll.h"
 
 TsRoll::TsRoll(int blockCount)
     : tsBlockIndex_(0),
@@ -18,7 +18,15 @@ void TsRoll::setTsBlock(int index, QVector<AVFrame*>* block)
 
 bool TsRoll::isBlockEmpty(int blockIdx)
 {
-    return !hasBlock(blockIdx) || roll[blockIdx]->size() == 0;
+    if (!hasBlock(blockIdx)) {
+        return true;
+    }
+    else if (roll[blockIdx]->size() == 0) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 bool TsRoll::isEmpty()
@@ -74,20 +82,30 @@ AVFrame *TsRoll::read(int blockIdx, int frameIdx)
     if (frameIdx < 0 ||frameIdx >= roll[blockIdx]->size()) {
         return nullptr;
     }
-    QReadLocker locker(&lock);
+    //QReadLocker locker(&lock);
     AVFrame* frame = roll.at(blockIdx)->at(frameIdx);
     return frame;
 }
 
 AVFrame *TsRoll::read()
 {
-    QReadLocker locker(&lock);
+    //QReadLocker locker(&lock);
     AVFrame* frame = roll.at(tsBlockIndex_)->at(tsFrameIndex_);
     return frame;
 }
 
 void TsRoll::nextFrame()
 {
+    if (roll.at(tsBlockIndex_) == nullptr) {
+        return;
+    }
+    if (roll.at(tsBlockIndex_)->size() - 1 < tsFrameIndex_) {
+        if (!isLastBlock()) {
+            nextBlock();
+            tsFrameIndex_ = 0;
+        }
+        return;
+    }
     if (tsFrameIndex_ + 1 < roll.at(tsBlockIndex_)->size()) {
         tsFrameIndex_ += 1;
     }
@@ -133,8 +151,8 @@ bool TsRoll::isFirstFrame()
 
 bool TsRoll::isLastFrame()
 {
-    return tsBlockIndex_ == roll.size() &&
-            tsFrameIndex_ == roll.at(tsBlockIndex_)->size();
+    return tsBlockIndex_ == (roll.size() - 1) &&
+            tsFrameIndex_ == (roll.at(tsBlockIndex_)->size() - 1);
 }
 
 bool TsRoll::isFirstBlock()
@@ -144,7 +162,7 @@ bool TsRoll::isFirstBlock()
 
 bool TsRoll::isLastBlock()
 {
-    return tsBlockIndex_ == roll.size();
+    return tsBlockIndex_ == (roll.size() - 1);
 }
 
 bool TsRoll::seek(int blockIdx, int frameIdx)
@@ -161,7 +179,7 @@ bool TsRoll::seek(int blockIdx, int frameIdx)
 
 bool TsRoll::hasBlock(int blockIdx)
 {
-    return roll.at(blockIdx) == nullptr;
+    return roll.at(blockIdx) != nullptr;
 }
 
 bool TsRoll::canRead(int blockIdx, int frameIdx)
@@ -181,7 +199,34 @@ bool TsRoll::canRead(int blockIdx, int frameIdx)
 
 bool TsRoll::canRead()
 {
-    return roll.at(tsBlockIndex_) != nullptr &&
-            roll.at(tsBlockIndex_)->at(tsFrameIndex_) != nullptr;
+    if (roll.isEmpty()) {
+        return false;
+    }
+    else if (roll.at(tsBlockIndex_) == nullptr) {
+        return false;
+    }
+    else {
+        if (roll.at(tsBlockIndex_)->isEmpty()) {
+            return false;
+        }
+        else {
+            if (roll.at(tsBlockIndex_)->size() - 1 < tsFrameIndex_) {
+                return false;
+            }
+            else {
+                return roll.at(tsBlockIndex_)->at(tsFrameIndex_) != nullptr;
+            }
+        }
+    }
+}
+
+int TsRoll::tsBlockIndex() const
+{
+    return tsBlockIndex_;
+}
+
+int TsRoll::tsFrameIndex() const
+{
+    return tsFrameIndex_;
 }
 

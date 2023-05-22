@@ -112,6 +112,26 @@ void HlsIndex::setFrameRate(int frameRate)
     frameRate_ = frameRate;
 }
 
+int HlsIndex::getSampleRate() const
+{
+    return sampleRate_;
+}
+
+void HlsIndex::setSampleRate(int sampleRate)
+{
+    sampleRate_ = sampleRate;
+}
+
+int HlsIndex::getChennels() const
+{
+    return chennels_;
+}
+
+void HlsIndex::setChennels(int chennels)
+{
+    chennels_ = chennels;
+}
+
 //void HlsIndex::setDecodedCount(int value)
 //{
 //    decodedCount = value;

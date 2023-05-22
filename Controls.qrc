@@ -31,5 +31,6 @@
         <file>FileBrowserItem.qml</file>
         <file>VersionSelector.qml</file>
         <file>CommentBrowser.qml</file>
+        <file>MediaController.qml</file>
     </qresource>
 </RCC>

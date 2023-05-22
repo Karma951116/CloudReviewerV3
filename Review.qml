@@ -1,4 +1,4 @@
-import QtQuick 2.0
+﻿import QtQuick 2.0
 import Toou2D 1.0
 import QtQuick.Controls 2.0
 import QtQuick.Window 2.0
@@ -237,19 +237,93 @@ Rectangle {
         VideoPlayer {
             id: video_player
             width: 1280
-            height: 798
-            anchors.centerIn: parent
+            height: 723
+            anchors.top: parent
+            anchors.topMargin: 28
+            anchors.left: parent
+            anchors.leftMargin: 160
 
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
-                    video_player.play();
+                    if (video_player.getState() === VideoPlayer.PAUSE ||
+                            video_player.getState() === VideoPlayer.STOP) {
+                        video_player.play();
+                    }
+                    else {
+                        video_player.pause();
+                    }
+
                 }
             }
         }
+        Slider {
+            id: time_slider
+            width: video_player.width
+            height: 6
+            anchors.top: video_player.bottom
+            anchors.left: parent.left
+            padding: 0
+            from: 0
+            to: media_time.currentIndex == 0 ? media_player.duration_time :
+                                               media_player.duration_frame
+            value: media_time.currentIndex == 0 ? media_player.current_time :
+                                                  media_player.current_frame
+            stepSize: 1
+            enabled: media_player.locked == 0 ? true : false
+            background: Rectangle {
+                x: time_slider.leftPadding
+                y: time_slider.topPadding +
+                   time_slider.availableHeight / 2 -
+                   height / 2
 
-        //Player
+                implicitWidth: 1280
+                implicitHeight: 6
+                width: implicitWidth
+                height: implicitHeight
+                color: Qt.rgba(87, 103, 249, 0.12)
+                Rectangle {
+                    width: time_slider.visualPosition * parent.width
+                    height: parent.height
+                    color: "#5767F9"
+                }
+            }
 
+            handle: Rectangle {
+                x: time_slider.leftPadding +
+                   time_slider.visualPosition *
+                   (time_slider.availableWidth - width)
+                y: time_slider.topPadding +
+                   time_slider.availableHeight / 2 -
+                   height / 2
+
+                implicitWidth: 3
+                implicitHeight: 6
+                radius: 0
+                color: "transparent"
+                border.color: "transparent"
+            }
+
+            onPressedChanged: {
+                if(!pressed) {
+                    media_player.seek(value);
+                }
+            }
+        }
+        Rectangle {
+            id: comment_timeline
+            width: video_player.width
+            height: 45
+            anchors.top: time_slider.bottom
+            anchors.left: video_player.left
+        }
+        MediaController {
+            width: parent.width
+            height: 45
+            anchors.top: comment_timeline.bottom
+            anchors.left: video_player.left
+            anchors.horizontalCenter: video_player.horizontalCenter
+        }
     }
     CommentBrowser {
         width: 360
