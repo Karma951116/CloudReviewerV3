@@ -11,10 +11,10 @@ void DecodeWorker::run()
 {
     TsFile* ts = hlsIndex_->getFiles().at(blockIndex_);
 
-    if (!ts->fetched()) {
+    if (ts->fetchState() != TsFile::FETCHED) {
         return;
     }
-
+    ts->setDecodeState(TsFile::DECODING);
     AVFormatContext *fmt_ctx = nullptr;
     AVIOContext *avio_ctx = nullptr;
     AVCodec* video_codec_  = nullptr;
@@ -36,16 +36,6 @@ void DecodeWorker::run()
     avio_ctx_buffer = (uint8_t *)av_malloc(avio_ctx_buffer_size);
     avio_ctx = avio_alloc_context(avio_ctx_buffer, avio_ctx_buffer_size,
                                   0, &bd, read_packet, NULL, NULL);
-
-    //    AVInputFormat* inputFmt = NULL;
-    //    if (av_probe_input_buffer(avio_ctx, &inputFmt, "", NULL, 0, 0) < 0)
-    //    {
-    //        qDebug() << ("probe format failed\n");
-    //    }
-    //    else
-    //    {
-    //        qDebug() << ("format:%s[%s]\n", inputFmt->name, inputFmt->long_name);
-    //    }
     fmt_ctx->pb = avio_ctx;
     fmt_ctx->flags = AVFMT_FLAG_CUSTOM_IO;
     if (avformat_open_input(&fmt_ctx, "", NULL, NULL) < 0)
@@ -130,22 +120,30 @@ void DecodeWorker::run()
                     pkt.stream_index == video_index_ ? video_codec_context_ : audio_codec_context_,
                     &pkt);
         if (ret == AVERROR_EOF) {
+            av_packet_unref(&pkt);
+            av_frame_free(&frame);
             break;
         }
         else if (ret == AVERROR(EAGAIN)) {
+            av_packet_unref(&pkt);
+            av_frame_free(&frame);
             continue;
         }
         ret = avcodec_receive_frame(
                     pkt.stream_index == video_index_ ? video_codec_context_ : audio_codec_context_,
                     frame);
         if (ret == AVERROR_EOF) {
+            av_packet_unref(&pkt);
+            av_frame_free(&frame);
             break;
         }
         else if (ret == AVERROR(EAGAIN)) {
+            av_packet_unref(&pkt);
+            av_frame_free(&frame);
             continue;
         }
         if (pkt.stream_index == video_index_) {
-            if (blockIndex_ == 0) {
+            if (blockIndex_ == 0 && vMeta.isNull()) {
                 VideoMeta meta_;
                 meta_.width = video_codec_context_->width == 0 ?
                             frame->width : video_codec_context_->width;
@@ -154,12 +152,14 @@ void DecodeWorker::run()
                 meta_.pixelFormat = video_codec_context_->pix_fmt;
                 meta_.vTimeBase = av_q2d(video_stream_->time_base);
                 meta_.vTimeBaseRational = video_stream_->time_base;
+                // 应从接口取得，仅为测试设置
+                meta_.frameRate = 24;
                 vMeta.setValue(meta_);
             }
             vFrameVector->append(frame);
         }
         else if (pkt.stream_index == audio_index_){
-            if (blockIndex_ == 0) {
+            if (blockIndex_ == 0 && aMeta.isNull()) {
                 AudioMeta meta_;
                 meta_.channelLayout = audio_codec_context_->channel_layout == 0 ?
                             frame->channel_layout : audio_codec_context_->channel_layout;
@@ -170,16 +170,21 @@ void DecodeWorker::run()
                             frame->channels : audio_codec_context_->channels;
                 meta_.aTimeBase = av_q2d(audio_stream_->time_base);
                 meta_.aTimeBaseRational = audio_stream_->time_base;
+                meta_.samplePerFrame = frame->nb_samples;
                 aMeta.setValue(meta_);
             }
             aFrameVector->append(frame);
         }
         av_packet_unref(&pkt);
     }
+    avio_context_free(&avio_ctx);
+    avcodec_free_context(&video_codec_context_);
+    avcodec_free_context(&audio_codec_context_);
     avformat_free_context(fmt_ctx);
-
     qDebug() << "Decode Ts: " << ts->fileName();
     emit decodeFinished(vFrameVector, aFrameVector, blockIndex_, vMeta, aMeta);
+    ts->setDecodeState(TsFile::DECODED);
+    this->deleteLater();
 }
 int DecodeWorker::read_packet(void *opaque, uint8_t *buf, int buf_size)
 {

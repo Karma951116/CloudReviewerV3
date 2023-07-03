@@ -255,6 +255,7 @@ void ReplyParser::m3u8IndexProcess(QByteArray data)
         m3u8ReplyDone(false, index);
     }
     double indexDuration = 0;
+    QList<double>* timeTable = index->getTimeTable();
     for (int i = 0; i < targetList.size(); i++) {
         QString target = targetList[i];
         if (target.contains("#EXT-X-ENDLIST")) {
@@ -266,14 +267,13 @@ void ReplyParser::m3u8IndexProcess(QByteArray data)
         file->setDuration(info[0].remove("#EXTINF:").toDouble());
         file->setFileName(info[1].trimmed());
         file->setUrl(index->getUrl() + file->fileName());
-        file->setDecoded(false);
-        file->setFetched(false);
-        connect(file, SIGNAL(fetchChanged(bool)),
-                index, SLOT(onFileFetchChanged(bool)));
-        connect(file, SIGNAL(decodeChanged(bool)),
-                index, SLOT(onFileDecodeChanged(bool)));
+        file->setFetchState(TsFile::TsState::NOT_FETCHED);
+        file->setDecodeState(TsFile::DecodeState::NOT_DECODE);
+        connect(file, SIGNAL(fetchChanged(TsFile::TsState)),
+                index, SLOT(onFileFetchChanged(TsFile::TsState)));
         index->insertTs(file);
         indexDuration += file->duration();
+        timeTable->append(indexDuration);
     }
     index->setDuration(indexDuration);
     m3u8ReplyDone(true, index);
@@ -285,7 +285,7 @@ void ReplyParser::tsFileProcess(ReplyMeta meta, QByteArray data)
     ts->setDataLength(data.length());
     ts->setData((uint8_t*)malloc(ts->dataLength()));
     memcpy(ts->data(), (uint8_t*)data.data(), ts->dataLength());
-    ts->setFetched(true);
+    ts->setFetchState(TsFile::TsState::FETCHED);
 //    QFile file("E:\\ts_test\\" + ts->fileName() + ".ts");
 //    file.open(QIODevice::WriteOnly);
 //    file.write(data);
@@ -356,6 +356,8 @@ void ReplyParser::onReplied(ReplyMeta meta, QByteArray content, QNetworkReply::N
     case DataType::TS:
         if (error == QNetworkReply::TimeoutError) {
             qDebug() << "ts timeout";
+            TsFile* ts = (TsFile*)meta.userData;
+            ts->setFetchState(TsFile::TsState::NOT_FETCHED);
         }
         tsFileProcess(meta, content);
         break;

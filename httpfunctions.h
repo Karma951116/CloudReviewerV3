@@ -57,6 +57,7 @@ public slots:
     void onRequestTsFile(QString tsName, TsFile* Ts, QString url = nullptr);
 private slots:
     void onRequestFinished(QNetworkReply* reply);
+    void onTsTimeout(QNetworkReply* reply);
 };
 
 #endif // HTTPFUNCTIONS_H

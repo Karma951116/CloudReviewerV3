@@ -1,7 +1,8 @@
-#ifndef HLSINDEX_H
+﻿#ifndef HLSINDEX_H
 #define HLSINDEX_H
 
 #include <QObject>
+#include <QMap>
 #include <tsfile.h>
 
 class HlsIndex : public QObject
@@ -47,6 +48,8 @@ public:
     int getChennels() const;
     void setChennels(int chennels);
 
+    QList<double>* getTimeTable() const;
+
 private:
     QString url_;
     char* data_;
@@ -60,10 +63,10 @@ private:
     int frameRate_;
     int sampleRate_;
     int chennels_;
+    QList<double>* timeTable;
 
 public slots:
-    void onFileFetchChanged(bool fetched);
-    void onFileDecodeChanged(bool decode);
+    void onFileFetchChanged(TsFile::TsState fetched);
 
 };
 

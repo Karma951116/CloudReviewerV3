@@ -1,7 +1,4 @@
-﻿#define DEBUG
-// #define PROD
-
-#include <QJsonDocument>
+﻿#include <QJsonDocument>
 #include <QUrlQuery>
 #include <QFile>
 #include <QNetworkCookie>
@@ -10,6 +7,7 @@
 #include <QRegularExpression>
 
 #include "httpfunctions.h"
+#include "replytimeout.h"
 
 
 HttpFunctions::HttpFunctions()
@@ -22,7 +20,7 @@ HttpFunctions::HttpFunctions()
     QNetworkConfiguration config = manager_->configuration();
     config.setConnectTimeout(3000);
 #ifdef DEBUG
-    address_ = "192.168.103.170";
+    address_ = "127.0.0.1";
     port_ = "6344";
 #endif
 #ifdef PROD
@@ -189,7 +187,7 @@ void HttpFunctions::getIndex(QString url, QString auditFileFolderUuid)
 {
     QUrl qUrl;
 #ifdef DEBUG
-    qUrl.setUrl("https://wolongzywcdn3.com:65/20220409/7kJCToaq/index.m3u8");
+    qUrl.setUrl("https://s7.fsvod1.com/20221010/ewaGwIfh/1500kb/hls/index.m3u8");
 #endif
 #ifdef PROD
     qUrl.setUrl("http://192.168.10.110:8069/cloudmovie/interrogationRoom/V1/index.m3u8");
@@ -223,7 +221,7 @@ void HttpFunctions::getTs(QString tsName, TsFile *ts, QString url = nullptr)
 {
     QUrl qUrl;
 #ifdef DEBUG
-    qUrl.setUrl("https://wolongzywcdn3.com:65/20220409/7kJCToaq/" + tsName);
+    qUrl.setUrl("https://s7.fsvod1.com" + tsName);
 #endif
 #ifdef PROD
     //qUrl.setUrl("http://192.168.10.110:8069/cloudmovie/interrogationRoom/V1/index.ts");
@@ -235,7 +233,11 @@ void HttpFunctions::getTs(QString tsName, TsFile *ts, QString url = nullptr)
     request_.setRawHeader("Content-Type", "video/mp2t");
     request_.setRawHeader("Cookie", session_id_.toUtf8());
     request_.setUrl(qUrl);
-    map_.insert(manager_->get(request_), ReplyMeta{TS, ts});
+    QNetworkReply* reply = manager_->get(request_);
+//    ReplyTimeout* timeout = new ReplyTimeout(reply, 3000);
+//    connect(timeout, &ReplyTimeout::timeout, this, &HttpFunctions::onTsTimeout);
+    map_.insert(reply, ReplyMeta{TS, ts});
+    ts->setFetchState(TsFile::TsState::FETCHING);
 }
 
 bool HttpFunctions::getNetworkImage(QString imageUrl, QString uuid)
@@ -284,4 +286,12 @@ void HttpFunctions::onRequestFinished(QNetworkReply *reply)
 {
     getSessionId(reply);
     replied(map_.value(reply), reply->readAll(), reply->error());
+}
+
+void HttpFunctions::onTsTimeout(QNetworkReply *reply)
+{
+    TsFile* file = (TsFile*)map_.value(reply).userData;
+    getTs(file->fileName(), file);
+    reply->abort();
+    reply->deleteLater();
 }

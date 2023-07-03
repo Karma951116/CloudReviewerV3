@@ -38,8 +38,8 @@
         <file alias="monitor">statics/icon/monitor.png</file>
         <file>statics/icon/new_comment.png</file>
         <file>statics/icon/new_comment.svg</file>
-        <file>statics/icon/pause.png</file>
-        <file>statics/icon/play.png</file>
+        <file alias="pause">statics/icon/pause.png</file>
+        <file alias="play">statics/icon/play.png</file>
         <file alias="project_btn">statics/icon/project_btn.png</file>
         <file alias="pwd_display">statics/icon/pwd_display.png</file>
         <file alias="pwd_hide">statics/icon/pwd_hide.png</file>
@@ -51,6 +51,7 @@
         <file alias="video">statics/icon/video.png</file>
         <file>statics/icon/volume.png</file>
         <file>statics/icon/volume_zero.png</file>
+        <file alias="replay">statics/icon/replay.png</file>
     </qresource>
     <qresource prefix="/texture">
         <file alias="filecard_bg">statics/texture/card_file_background.png</file>

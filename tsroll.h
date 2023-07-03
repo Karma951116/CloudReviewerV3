@@ -47,7 +47,11 @@ private:
     QVector<QVector<AVFrame*>*> roll;
 
 signals:
+    void clearBuffer();
+    void blockCleared(int blockIndex);
 
+private slots:
+    void onClearBuffer();
 };
 
 #endif // TSROLL_H

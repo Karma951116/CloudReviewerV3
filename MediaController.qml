@@ -1,6 +1,7 @@
-import QtQuick 2.0
+﻿import QtQuick 2.0
 import Toou2D 1.0
 import QtQuick.Controls 2.0
+import VideoPlayer 1.0
 
 TRectangle {
     id: media_toolbar
@@ -13,8 +14,11 @@ TRectangle {
     color: "#283046"
     radius: workstation_page.isFullScreen ? 0 : 3
 
+    property alias timeDisplay: media_time
+    property alias playBtn: play_btn
+
     TRectangle {
-        id: media_toolbar_rectmask
+        id: toolbar_rectmask
         width: parent.width
         height: 3
         anchors.top: parent.top
@@ -24,26 +28,26 @@ TRectangle {
     }
 
     TImageButton {
-        id: media_play_btn
+        id: play_btn
         width: 32
         height: 32
         anchors.left: parent.left
         anchors.leftMargin: 24
         anchors.top: parent.top
-        anchors.topMargin: 5 + media_toolbar_rectmask.height
-        source: media_player.state == Player.PLAY ?
-                    "qrc:/resources/icon/pause.png" :
-                    "qrc:/resources/icon/play.png"
+        anchors.topMargin: 5 + toolbar_rectmask.height
+        source: video_player.state === VideoPlayer.PLAY ?
+                    "qrc:/icon/pause" :
+                    "qrc:/icon/play"
 
         onClicked: {
-            switch (media_player.state) {
-            case Player.PLAY:
-                media_player.pause();
+            switch (video_player.state) {
+            case VideoPlayer.PLAY:
+                video_player.pause();
                 break;
-            case Player.PAUSE:
-            case Player.STOP:
+            case VideoPlayer.PAUSE:
+            case VideoPlayer.STOP:
                 workstation_page.paintMode = false;
-                media_player.play();
+                video_player.play();
                 break;
             }
         }
@@ -53,10 +57,10 @@ TRectangle {
         id: media_fast_backward_btn
         width: 32
         height: 32
-        anchors.left: media_play_btn.right
+        anchors.left: play_btn.right
         anchors.leftMargin: 16
         anchors.top: parent.top
-        anchors.topMargin: 5 + media_toolbar_rectmask.height
+        anchors.topMargin: 5 + toolbar_rectmask.height
         source: "qrc:/resources/icon/backward.png"
 
         onClicked: {
@@ -77,7 +81,7 @@ TRectangle {
         height: 32
         anchors.left: media_fast_backward_btn.right
         anchors.top: parent.top
-        anchors.topMargin: 5 + media_toolbar_rectmask.height
+        anchors.topMargin: 5 + toolbar_rectmask.height
         source: "qrc:/resources/icon/forward.png"
 
         onClicked: {
@@ -100,10 +104,10 @@ TRectangle {
         anchors.left: media_fast_forward_btn.right
         anchors.leftMargin: 16
         anchors.top: parent.top
-        anchors.topMargin: media_toolbar_rectmask.height
+        anchors.topMargin: toolbar_rectmask.height
         displayText: currentIndex == 0 ?
-             utils.sec2Time(media_player.current_time.toFixed(0)) +
-                         " / " + utils.sec2Time(media_player.duration_time) :
+             formatTransformer.sec2Time(video_player.currentTime.toFixed(0)) +
+                         " / " + formatTransformer.sec2Time(video_player.durationTime) :
              media_player.current_frame + " / " + media_player.duration_frame
 
         model: [

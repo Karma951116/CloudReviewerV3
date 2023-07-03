@@ -1,4 +1,4 @@
-#ifndef FORMATTRANSFORMER_H
+﻿#ifndef FORMATTRANSFORMER_H
 #define FORMATTRANSFORMER_H
 
 #include <QObject>
@@ -12,6 +12,8 @@ public:
 
     Q_INVOKABLE QString strToBase64(QString str);
     Q_INVOKABLE QString base64ToStr(QString base64Str);
+    Q_INVOKABLE int time2Sec(QString time);
+    Q_INVOKABLE QString sec2Time(int seconds);
 
     static QString toDateTime(QJsonValue time);
     static QString getMediaTypeBySuffix(QString suffix);

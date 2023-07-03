@@ -21,6 +21,7 @@ extern "C"
 struct VideoMeta {
     int width;
     int height;
+    double frameRate;
     AVPixelFormat pixelFormat;
     double vTimeBase;
     AVRational vTimeBaseRational;
@@ -31,6 +32,7 @@ struct AudioMeta {
     int sampleRate;
     AVSampleFormat sampleFormat;
     int channels;
+    int samplePerFrame;
     double aTimeBase;
     AVRational aTimeBaseRational;
 };

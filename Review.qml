@@ -25,6 +25,7 @@ Rectangle {
             height: 24
             source: "qrc:/icon/menu"
             onClicked: {
+                video_player.stop();
                 root.goBrowse();
             }
         }
@@ -238,9 +239,9 @@ Rectangle {
             id: video_player
             width: 1280
             height: 723
-            anchors.top: parent
+            anchors.top: parent.top
             anchors.topMargin: 28
-            anchors.left: parent
+            anchors.left: parent.left
             anchors.leftMargin: 160
 
             MouseArea {
@@ -257,18 +258,60 @@ Rectangle {
                 }
             }
         }
+        Rectangle {
+            id: replay_mask
+            width: video_player.width
+            height: video_player.height
+            anchors.centerIn: video_player
+            color: "#AA000000"
+            visible: false
+            TImageButton {
+                id: restart_btn
+                width: 24
+                height: 24
+                anchors.centerIn: parent
+                source: "qrc:/icon/replay"
+                onClicked: {
+                    video_player.replay();
+                    replay_mask.visible = false;
+                }
+            }
+        }
+        Rectangle {
+            id: play_mask
+            width: video_player.width
+            height: video_player.height
+            anchors.centerIn: video_player
+            color: "#AA000000"
+            visible: video_player.state == VideoPlayer.PAUSE &&
+                     replay_mask.visible == false
+            TImageButton {
+                id: play_mask_btn
+                width: 48
+                height: 48
+                opacity: 0.8
+                anchors.centerIn: parent
+                source: "qrc:/icon/play"
+                onClicked: {
+                    video_player.play();
+                }
+            }
+        }
+
         Slider {
             id: time_slider
             width: video_player.width
             height: 6
             anchors.top: video_player.bottom
-            anchors.left: parent.left
+            anchors.left: video_player.left
             padding: 0
             from: 0
-            to: media_time.currentIndex == 0 ? media_player.duration_time :
-                                               media_player.duration_frame
-            value: media_time.currentIndex == 0 ? media_player.current_time :
-                                                  media_player.current_frame
+            to: media_controller.timeDisplay.currentIndex == 0 ?
+                    video_player.durationTime :
+                    video_player.duration_frame
+            value: media_controller.timeDisplay.currentIndex == 0 ?
+                       video_player.currentTime :
+                       video_player.current_frame
             stepSize: 1
             enabled: media_player.locked == 0 ? true : false
             background: Rectangle {
@@ -306,7 +349,7 @@ Rectangle {
 
             onPressedChanged: {
                 if(!pressed) {
-                    media_player.seek(value);
+                    video_player.seekTime(value);
                 }
             }
         }
@@ -318,6 +361,7 @@ Rectangle {
             anchors.left: video_player.left
         }
         MediaController {
+            id: media_controller
             width: parent.width
             height: 45
             anchors.top: comment_timeline.bottom
@@ -336,6 +380,13 @@ Rectangle {
     Component.onCompleted: {
         video_player.setReplyParser(replyParser);
         video_player.setHttpFunctions(httpFunctions);
+    }
+
+    Connections {
+        target: video_player
+        onVideoFinished: {
+            replay_mask.visible = true;
+        }
     }
 
 //    Connections {

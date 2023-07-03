@@ -1,4 +1,4 @@
-#include "formattransformer.h"
+﻿#include "formattransformer.h"
 #include <QDateTime>
 #include <QTime>
 
@@ -16,6 +16,27 @@ QString FormatTransformer::strToBase64(QString str)
 QString FormatTransformer::base64ToStr(QString base64Str)
 {
     return QString::fromUtf8(QByteArray::fromBase64(base64Str.toUtf8()));
+}
+
+int FormatTransformer::time2Sec(QString time)
+{
+    QTime tmp = QTime::fromString(time);
+    if (tmp.isNull()) {
+        return -1;
+    }
+    int hour = tmp.hour() == -1 ? 0 : tmp.hour();
+    int min = tmp.minute() == -1 ? 0 : tmp.minute();
+    int sec = tmp.second() == -1 ? 0 : tmp.second();
+    return hour * 3600 + min * 60 + sec;
+}
+
+QString FormatTransformer::sec2Time(int seconds)
+{
+    if (seconds == NULL) {
+        return "";
+    }
+    QString time=QTime(0, 0, 0).addSecs(seconds).toString(QString::fromLatin1("HH:mm:ss"));
+    return time;
 }
 
 QString FormatTransformer::toDateTime(QJsonValue time)

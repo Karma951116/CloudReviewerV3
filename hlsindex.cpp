@@ -1,4 +1,4 @@
-#include "hlsindex.h"
+﻿#include "hlsindex.h"
 
 #include <QWriteLocker>
 
@@ -8,7 +8,8 @@ HlsIndex::HlsIndex(QObject *parent)
     : QObject(parent),
       fetchedCount_(0),
       decodedCount_(0),
-      fetchedAll_(false)
+      fetchedAll_(false),
+      timeTable(new QList<double>())
 {
 
 }
@@ -132,23 +133,23 @@ void HlsIndex::setChennels(int chennels)
     chennels_ = chennels;
 }
 
+QList<double>* HlsIndex::getTimeTable() const
+{
+    return timeTable;
+}
+
 //void HlsIndex::setDecodedCount(int value)
 //{
 //    decodedCount = value;
 //}
 
-void HlsIndex::onFileFetchChanged(bool fetched)
+void HlsIndex::onFileFetchChanged(TsFile::TsState fetched)
 {
-    fetchedCount_ += 1;
+    if (fetched == TsFile::TsState::FETCHED) {
+        fetchedCount_ += 1;
+    }
     if (fetchedCount_ == files_.size()) {
         fetchedAll_ = true;
     }
 }
 
-void HlsIndex::onFileDecodeChanged(bool decode)
-{
-    decodedCount_ += 1;
-    if (decodedCount_ == files_.size()) {
-        fetchedAll_ = true;
-    }
-}

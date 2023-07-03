@@ -1,4 +1,4 @@
-#ifndef TSFILE_H
+﻿#ifndef TSFILE_H
 #define TSFILE_H
 
 #include <QObject>
@@ -8,6 +8,17 @@ class TsFile : public QObject
 {
     Q_OBJECT
 public:
+    enum TsState {
+        NOT_FETCHED,
+        FETCHING,
+        FETCHED
+    };
+    enum DecodeState {
+        NOT_DECODE,
+        DECODING,
+        DECODED,
+    };
+
     explicit TsFile(QObject *parent = nullptr);
 
 
@@ -27,14 +38,15 @@ public:
     int dataLength() const;
     void setDataLength(int dataLength);
 
-    bool decoded() const;
-    void setDecoded(bool decoded);
-
-    bool fetched() const;
-    void setFetched(bool fetched);
-
     int tsIndex() const;
     void setTsIndex(int tsIndex);
+
+
+    TsFile::TsState fetchState() const;
+    void setFetchState(const TsFile::TsState &fetchState);
+
+    DecodeState decodeState() const;
+    void setDecodeState(const DecodeState &decodeState);
 
 private:
     int tsIndex_;
@@ -44,13 +56,12 @@ private:
     // 指针类型待定
     uint8_t* data_;
     size_t dataLength_;
-    bool decoded_;
-    bool fetched_;
+    TsState fetchState_;
+    DecodeState decodeState_;
     QReadWriteLock lock_;
 
 signals:
-    void fetchChanged(bool fetched);
-    void decodeChanged(bool decoded);
+    void fetchChanged(TsFile::TsState fetchState);
 };
 
 #endif // TSFILE_H

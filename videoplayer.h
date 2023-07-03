@@ -38,19 +38,20 @@ public:
         PAUSE,
         STOP
     };
-
-
-    struct SyncMeta {
-        double videoClock;
-        double audioClock;
-
-    };
-
     Q_ENUM(PlayState);
+
+    Q_PROPERTY(double durationTime READ getIndexDurationTime NOTIFY indexDurationTimeChanged)
+    Q_PROPERTY(double currentTime READ getIndexCurrentTime NOTIFY indexCurrentTimeChanged)
+//    Q_PROPERTY(double durationFrame READ getIndexDurationFrame NOTIFY indexDurationFrameChanged)
+//    Q_PROPERTY(double currentTime READ getIndexCurrentFrame NOTIFY indexCurrentFrameChanged)
+    Q_PROPERTY(double state READ getState NOTIFY stateChanged)
+
     VideoPlayer();
 
     Q_INVOKABLE void play();
     Q_INVOKABLE void pause();
+    Q_INVOKABLE void stop();
+    Q_INVOKABLE void replay();
     HlsIndex *getHlsIndex() const;
     void setHlsIndex(HlsIndex *index);
 
@@ -67,9 +68,6 @@ public:
     //FrameQueue* audioQueue_;
     TsRoll* vRoll;
     TsRoll* aRoll;
-
-    SyncMeta* syncMeta;
-
     bool getHasVideo() const;
     void setHasVideo(bool value);
 
@@ -78,6 +76,15 @@ public:
 
     Q_INVOKABLE void setReplyParser(ReplyParser *value);
     Q_INVOKABLE void setHttpFunctions(HttpFunctions *value);
+
+    Q_INVOKABLE double getIndexDurationTime();
+    Q_INVOKABLE double getIndexCurrentTime();
+
+    Q_INVOKABLE void seekTime(int seekPoint);
+    Q_INVOKABLE void seekFrame(int seekPoint);
+
+    bool audioEnd;
+    bool videoEnd;
 
 protected:
     virtual void paint(QPainter* painter);
@@ -91,6 +98,7 @@ private:
     int tsDecoderCount_;
     QReadWriteLock fetchLock_;
     QReadWriteLock decodeLock_;
+    QReadWriteLock playLock_;
 
     SwsContext* swsContext_;
     unsigned char* swsOutBuffer_;
@@ -101,12 +109,13 @@ private:
 
     SDL_Thread* videoThread_;
 
-    //QThreadPool fetchPool_;
-    //QThreadPool decodePool_;
-    int fetchIndex_;
-    int fetcherCount_;
-    static int tsFetch(void *arg);
-    static int tsFetchWorker(void *arg);
+    int decodeWorkerCount_;
+
+    double videoClock_;
+    double vFirstClock_;
+    double audioClock_;
+    double aFirstClock_;
+    double diff_;
 
     static int videoPlay(void *arg);
 
@@ -129,14 +138,33 @@ private:
     HttpFunctions* httpFunctions_;
 
     QTimer* checkTimer_;
+    double correctAudioClock();
+
+    static int durationFrameCalc(void *arg);
+#ifdef DEBUG
+    double tsVolume;
+    double FrameVolume;
+#endif
 signals:
     void updateImage(QImage image);
     void requestTsFile(QString tsName, TsFile* TS, QString url = nullptr);
     void firstTsDecoded();
+    void waitNextFrameReady();
+    void indexDurationTimeChanged();
+    void indexCurrentTimeChanged();
+    void videoFinished();
+    void stateChanged();
+    void durationFrameCalcEnd();
+
 public slots:
     void onM3u8ReplyDone(bool success, HlsIndex* index);
     void onMediaInfoReplyDone(bool success, QJsonObject ret);
-//    void onTsFetched(TsFile* ts);
+    void onBlockCleared(int blockIdx);
+#ifdef DEBUG
+    void onTsFetched(TsFile* ts);
+    void onThreadFinished();
+#endif
+
 private slots:
     void onUpdateImage(QImage image);
     void onFirstTsDecoded();
@@ -144,6 +172,8 @@ private slots:
     void onFetchCheck();
     void onDecodeFinished(QVector<AVFrame*>* vFrameVector, QVector<AVFrame*>* aFrameVector,
                           int blockIndex, QVariant vMeta, QVariant aMeta);
+    void onVideoFinished();
+    void onDurationFrameCalcEnd();
 };
 
 #endif // VIDEOPLAYER_H

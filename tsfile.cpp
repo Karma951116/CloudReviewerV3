@@ -1,4 +1,4 @@
-#include "tsfile.h"
+﻿#include "tsfile.h"
 
 TsFile::TsFile(QObject *parent) : QObject(parent)
 {
@@ -56,30 +56,6 @@ void TsFile::setDataLength(int dataLength)
     dataLength_ = (size_t)dataLength;
 }
 
-bool TsFile::decoded() const
-{
-    return decoded_;
-}
-
-void TsFile::setDecoded(bool decoded)
-{
-    QWriteLocker locker(&lock_);
-    decoded_ = decoded;
-    decodeChanged(decoded_);
-}
-
-bool TsFile::fetched() const
-{
-    return fetched_;
-}
-
-void TsFile::setFetched(bool fetched)
-{
-    QWriteLocker locker(&lock_);
-    fetched_ = fetched;
-    fetchChanged(fetched_);
-}
-
 int TsFile::tsIndex() const
 {
     return tsIndex_;
@@ -88,5 +64,28 @@ int TsFile::tsIndex() const
 void TsFile::setTsIndex(int tsIndex)
 {
     tsIndex_ = tsIndex;
+}
+
+TsFile::TsState TsFile::fetchState() const
+{
+    return fetchState_;
+}
+
+void TsFile::setFetchState(const TsState &fetchState)
+{
+    QWriteLocker locker(&lock_);
+    fetchState_ = fetchState;
+    fetchChanged(fetchState);
+}
+
+TsFile::DecodeState TsFile::decodeState() const
+{
+    return decodeState_;
+}
+
+void TsFile::setDecodeState(const DecodeState &decodeState)
+{
+    QWriteLocker locker(&lock_);
+    decodeState_ = decodeState;
 }
 
