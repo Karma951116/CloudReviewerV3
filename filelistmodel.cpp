@@ -1,4 +1,4 @@
-#include "filelistmodel.h"
+﻿#include "filelistmodel.h"
 
 #include <QJsonObject>
 
@@ -11,11 +11,13 @@ FileListModel::FileListModel()
 
 QModelIndex FileListModel::index(int row, int column, const QModelIndex &parent) const
 {
+    Q_UNUSED(parent);
     return createIndex(row, column);
 }
 
 QModelIndex FileListModel::parent(const QModelIndex &child) const
 {
+    Q_UNUSED(child);
     return QModelIndex();
 }
 
@@ -87,6 +89,7 @@ int FileListModel::rowCount(const QModelIndex &parent) const
 
 int FileListModel::columnCount(const QModelIndex &parent) const
 {
+    Q_UNUSED(parent);
     return 1;
 }
 

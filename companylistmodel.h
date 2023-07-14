@@ -1,4 +1,4 @@
-#ifndef COMPANYLISTMODEL_H
+﻿#ifndef COMPANYLISTMODEL_H
 #define COMPANYLISTMODEL_H
 
 #include <QObject>
@@ -21,11 +21,12 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     QHash<int, QByteArray> roleNames() const;
     Company* getCompany(int row);
-    Q_INVOKABLE QVariant getRoleValue(int row, QString role);
-    Q_INVOKABLE QModelIndex getModelIndex(int row);
     void insert(Company* comp);
     void remove(int row, const QModelIndex &parent = QModelIndex());
     void clear(const QModelIndex &parent = QModelIndex());
+
+    Q_INVOKABLE QVariant getRoleValue(int row, QString role);
+    Q_INVOKABLE QModelIndex getModelIndex(int row);
 
 private:
     QList<Company*> companies;

@@ -40,7 +40,7 @@ void DecodeWorker::run()
     fmt_ctx->flags = AVFMT_FLAG_CUSTOM_IO;
     if (avformat_open_input(&fmt_ctx, "", NULL, NULL) < 0)
     {
-        fprintf(stderr, "Could not open input\n");
+        qDebug() << "Could not open input\n";
         return;
     }
 
@@ -153,7 +153,7 @@ void DecodeWorker::run()
                 meta_.vTimeBase = av_q2d(video_stream_->time_base);
                 meta_.vTimeBaseRational = video_stream_->time_base;
                 // 应从接口取得，仅为测试设置
-                meta_.frameRate = 24;
+                //meta_.frameRate = 24;
                 vMeta.setValue(meta_);
             }
             vFrameVector->append(frame);
@@ -183,7 +183,6 @@ void DecodeWorker::run()
     avformat_free_context(fmt_ctx);
     qDebug() << "Decode Ts: " << ts->fileName();
     emit decodeFinished(vFrameVector, aFrameVector, blockIndex_, vMeta, aMeta);
-    ts->setDecodeState(TsFile::DECODED);
     this->deleteLater();
 }
 int DecodeWorker::read_packet(void *opaque, uint8_t *buf, int buf_size)

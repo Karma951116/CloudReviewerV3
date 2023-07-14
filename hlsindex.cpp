@@ -138,6 +138,16 @@ QList<double>* HlsIndex::getTimeTable() const
     return timeTable;
 }
 
+QString HlsIndex::getAuditFileFolderUuid() const
+{
+    return auditFileFolderUuid_;
+}
+
+void HlsIndex::setAuditFileFolderUuid(const QString &auditFileFolderUuid)
+{
+    auditFileFolderUuid_ = auditFileFolderUuid;
+}
+
 //void HlsIndex::setDecodedCount(int value)
 //{
 //    decodedCount = value;

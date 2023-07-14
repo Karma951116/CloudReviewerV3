@@ -32,5 +32,17 @@
         <file>VersionSelector.qml</file>
         <file>CommentBrowser.qml</file>
         <file>MediaController.qml</file>
+        <file>CommentEditor.qml</file>
+        <file>CommentReference.qml</file>
+        <file>CommentItem.qml</file>
+        <file>CommentSubItem.qml</file>
+        <file>CommentTimeline.qml</file>
+        <file>CommentTimelineEditNode.qml</file>
+        <file>CommentTimelineNode.qml</file>
+        <file>CommentBrowserToolbar.qml</file>
+        <file>MemberSelector.qml</file>
+        <file>StampSelector.qml</file>
+        <file>ImageContoller.qml</file>
+        <file>ImageDisplayer.qml</file>
     </qresource>
 </RCC>

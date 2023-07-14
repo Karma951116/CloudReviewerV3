@@ -30,9 +30,13 @@ public:
     void reviewStatusProcess(QByteArray data);
     void networkImageProcess(ReplyMeta meta, QByteArray data);
     void fileInfoProcess(QByteArray data);
-    void m3u8IndexProcess(QByteArray data);
+    void m3u8IndexProcess(ReplyMeta meta, QByteArray data);
     void tsFileProcess(ReplyMeta meta, QByteArray data);
     void mediaInfoProcess(QByteArray data);
+    void stakeholderProcess(QByteArray data);
+    void commentUploadProcess(QByteArray data);
+    void commentRefreshProcess(QByteArray data);
+    void versionProcess(QByteArray data);
 
 signals:
     void pinReplyDone(bool success, QString msg = nullptr);
@@ -47,6 +51,9 @@ signals:
     void m3u8ReplyDone(bool success, HlsIndex* index);
     void mediaInfoReplyDone(bool success, QJsonObject mediaInfo = QJsonObject());
     void tsFetched(TsFile* ts);
+    void stakeholderReplyDone(bool success, QJsonArray stakeholders = QJsonArray());
+    void commentUploadReplyDone(bool success, QString msg);
+    void versionReplyDone(bool success, QJsonArray versions = QJsonArray());
 
 
     void updateTokens(QString accessToken, QString refreshToken);
@@ -56,6 +63,8 @@ public slots:
 
 private:
     QJsonObject originFileArr_;
+
+    QJsonArray commentDataProcess(QJsonArray comments);
 };
 
 #endif // REPLYPARSER_H

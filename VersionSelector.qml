@@ -1,34 +1,24 @@
-import QtQuick 2.0
+﻿import QtQuick 2.0
 import QtQuick.Controls 2.0
 import Toou2D 1.0
 
 ComboBox {
-    id: workstation_asset_version
+    id: versions
     property bool isSwitching: false
-    property var switchContentUuid;
-    property var switchFolderUuid;
-    property var switchVersionUuid;
-    property var switchVersionName;
-    property var switchFileFolder;
-    width: 150
-    height: 34
-    anchors.left: workstation_route.right
-    anchors.leftMargin: 25
-    anchors.verticalCenter: parent.verticalCenter
+    implicitWidth: 150
+    implicitHeight: 34
     hoverEnabled: true
-    model: ListModel {
-        id: versions_model
-    }
-    background: TRectangle {
+    model: versionModel
+    background: Rectangle {
         width: parent.width
         height: parent.height
         radius: 5
-        color: workstation_asset_version.hovered ? "#5767F9" : "#30384D"
+        color: versions.hovered ? "#5767F9" : "#30384D"
     }
     indicator: TImageButton {
         width: 16
         height: 16
-        source: "qrc:/resources/icon/arrow_down.png"
+        source: "qrc:/icon/arrow_down"
         anchors.right: parent.right
         anchors.rightMargin: 6
         anchors.verticalCenter: parent.verticalCenter
@@ -37,16 +27,15 @@ ComboBox {
         anchors.left: parent.left
         anchors.leftMargin: 12
         anchors.verticalCenter: parent.verticalCenter
-        text: workstation_asset_version.displayText
+        text: versions.displayText
         font.pixelSize: 14
         font.family: local_font.name
         font.weight: Font.DemiBold
-        color: workstation_asset_version.hovered ? "white" : "#676D7D"
+        color: versions.hovered ? "white" : "#676D7D"
         verticalAlignment: Text.AlignVCenter
     }
     delegate: ItemDelegate {
-        id: workstation_asset_version_delegate_item
-        signal versionChange();
+        id: versions_delegate_item
         width: 400
         height: 60
         highlighted: parent.highlightedIndex === index
@@ -75,7 +64,7 @@ ComboBox {
                 anchors.left: asset_version_name.right
                 anchors.leftMargin: 10
                 anchors.verticalCenter: parent.verticalCenter
-                source: auditFileFolder["image"]
+                source: imageUrl
             }
 
             Column {
@@ -91,7 +80,7 @@ ComboBox {
                 Text {
                     width: parent.width
                     height: 20
-                    text: auditFileFolder["name"]
+                    text: name
                     verticalAlignment: Text.AlignVCenter
                     font.pixelSize: 14
                     font.family: local_font.name
@@ -101,6 +90,7 @@ ComboBox {
                 Text {
                     width: parent.width
                     height: 20
+                    // 时间接口中没有
                     text: "2021/06/29 16:54:55"
                     verticalAlignment: Text.AlignVCenter
                     font.pixelSize: 14
@@ -114,23 +104,27 @@ ComboBox {
                 height: 20
                 anchors.left: asset_version_info.right
                 anchors.verticalCenter: parent.verticalCenter
-                source: "qrc:/resources/icon/checked.png"
-                visible: workstation_asset_version.displayText === versionName ?
-                    true : false
+                source: "qrc:/icon/company_checked"
+                visible: versionModel.currentVersion === versionUuid
             }
         }
         background: TRectangle {
             anchors.fill: parent
-            color: workstation_asset_version.highlightedIndex === index ?
+            color: versions.highlightedIndex === index ?
                        "#5767F9" : "transparent"
         }
         onClicked: {
-            workstation_asset_version.switchContentUuid = auditContentUuid;
-            workstation_asset_version.switchFolderUuid = auditFileFolderUuid;
-            workstation_asset_version.switchVersionUuid = versionUuid;
-            workstation_asset_version.switchFileFolder = versionName;
-            workstation_asset_version.isSwitching = true;
-            versionChanged();
+            video_player.stop();
+            httpFunctions.getFileInfo(auditFileFolderUuid);
+            httpFunctions.getIndex(auditFileFolderUuid);
+            runtimeCtx.setAuditContentUuid(auditContentUuid);
+            runtimeCtx.setVersionUuid(versionUuid);
+            runtimeCtx.setVersionName(versionName);
+            runtimeCtx.setAuditFileFolderUuid(auditFileFolderUuid);
+            runtimeCtx.setFileName(name);
+            runtimeCtx.setFileType(fileSuffix);
+            versionModel.setCurrentVersion(versionUuid);
+            versions.displayText = versionName;
         }
     }
     popup: Popup {
@@ -150,8 +144,8 @@ ComboBox {
             clip: true
             spacing: 18
 
-            model: workstation_asset_version.popup.visible ?
-                       workstation_asset_version.delegateModel : null
+            model: versions.popup.visible ?
+                       versions.delegateModel : null
         }
         background: TRectangle {
             width: parent.width
@@ -161,6 +155,13 @@ ComboBox {
             border.width: 1
             border.color: "#283046"
             radius: 5
+        }
+    }
+    Connections {
+        target: versionModel
+        onVersionListRefreshed: {
+            versionModel.setCurrentVersion(runtimeCtx.getVersionUuid());
+            versions.displayText = runtimeCtx.getVersionName();
         }
     }
 }

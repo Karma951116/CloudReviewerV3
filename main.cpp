@@ -12,9 +12,13 @@
 #include <user.h>
 #include <companylistmodel.h>
 #include <projectlistmodel.h>
-#include <runtimecontext.h>
+#include <commentlistmodel.h>
 #include <filelistmodel.h>
+#include <stakeholderlistmodel.h>
+#include <versionlistmodel.h>
+#include <runtimecontext.h>
 #include <videoplayer.h>
+#include <paintcanvas.h>
 
 #undef main
 int main(int argc, char *argv[])
@@ -23,9 +27,10 @@ int main(int argc, char *argv[])
 
     QGuiApplication app(argc, argv);
 
-    //qmlRegisterType<FileEntity>("FileEntity",1,0,"FileEntity");
+    qmlRegisterType<RuntimeContext>("RuntimeContext",1,0,"RuntimeContext");
     qmlRegisterType<ReplyParser>("FileListModel",1,0,"FileListModel");
     qmlRegisterType<VideoPlayer>("VideoPlayer",1,0,"VideoPlayer");
+    qmlRegisterType<PaintCanvas>("PaintCanvas",1,0,"PaintCanvas");
 
     ConfigHelper* config = new ConfigHelper("Config.ini");
     HttpFunctions* httpFunctions = new HttpFunctions();
@@ -40,6 +45,9 @@ int main(int argc, char *argv[])
     CompanyListModel* companyModel = new CompanyListModel();
     ProjectListModel* projectModel = new ProjectListModel();
     FileListModel* fileModel = new FileListModel();
+    CommentListModel* commentModel = new CommentListModel();
+    StakeholderListModel* stakeholderModel = new StakeholderListModel();
+    VersionListModel* versionModel = new VersionListModel();
 
 
     QObject::connect(httpFunctions, &HttpFunctions::replied,
@@ -54,6 +62,13 @@ int main(int argc, char *argv[])
                      projectModel, &ProjectListModel::onProjectReplyDone);
     QObject::connect(replyParser, &ReplyParser::projectFileReplyDone,
                      fileModel, &FileListModel::onProjectFileReplyDone);
+    QObject::connect(replyParser, &ReplyParser::commentReplyDone,
+                     commentModel, &CommentListModel::onCommentReplyDone);
+    QObject::connect(replyParser, &ReplyParser::stakeholderReplyDone,
+                     stakeholderModel, &StakeholderListModel::onStakeholderReplyDone);
+    QObject::connect(replyParser, &ReplyParser::versionReplyDone,
+                     versionModel, &VersionListModel::onVersionReplyDone);
+
 
 
     QQmlApplicationEngine engine;
@@ -68,6 +83,10 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("projectModel", projectModel);
     engine.rootContext()->setContextProperty("runtimeCtx", runCtx);
     engine.rootContext()->setContextProperty("fileModel", fileModel);
+    engine.rootContext()->setContextProperty("commentModel", commentModel);
+    engine.rootContext()->setContextProperty("stakeholderModel", stakeholderModel);
+    engine.rootContext()->setContextProperty("versionModel", versionModel);
+
 
 
 

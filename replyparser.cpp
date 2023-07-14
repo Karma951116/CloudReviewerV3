@@ -82,7 +82,7 @@ void ReplyParser::projectProcess(QByteArray data)
     }
     QJsonObject result = root["result"].toObject();
     QJsonArray projectList = result["projectList"].toArray();
-    if (projectList.size() <= 0) {
+    if (projectList.size() < 0) {
         projectReplyDone(false);
         return;
     }
@@ -180,13 +180,11 @@ void ReplyParser::networkImageProcess(ReplyMeta meta, QByteArray data)
 {
     QImage img;
     img.loadFromData(data);
-    char* tmp = (char*) meta.userData;
-    QByteArray uuid = QByteArray::fromRawData(tmp, 32);
     if (!img.isNull()) {
-        networkImageReplyDone(true, img.copy(), QString::fromLocal8Bit(uuid));
+        networkImageReplyDone(true, img.copy(), meta.userData2);
     }
     else {
-        networkImageReplyDone(false, img, QString::fromLocal8Bit(uuid));
+        networkImageReplyDone(false, img, meta.userData2);
     }
 }
 
@@ -204,47 +202,19 @@ void ReplyParser::fileInfoProcess(QByteArray data)
     QJsonObject folder = result.value("auditFileFolder").toObject();
     QString netDiskPath = folder.value("netDiskPath").toString();
     QString status = folder.value("status").toString();
-    QJsonArray comments = result.value("commentFile").toArray();
-    QJsonArray parentArr;
-    QJsonArray rebuildArr;
-    for (int i = 0; i < comments.size(); i++) {
-        QJsonObject comment = comments[i].toObject();
-        // 筛选主评论（无父级评论）
-        if (comment["parent"].isBool()) {
-            comment["commentParent"] = comment["parent"].toBool();
-            comment.remove("parent");
-            parentArr.append(comment);
-        }
-    }
-    for(int i = 0; i < parentArr.size(); i++) {
-        QJsonObject comment = parentArr[i].toObject();
-        comment["createDate"] = FormatTransformer::toDateTime(comment["createDate"]);
 
-        QJsonArray childrens;
-        for (int j = 0; j < comments.size(); j++) {
-            QJsonObject childrenComment = comments[j].toObject();
-            if (childrenComment["parent"].isBool()){
-                continue;
-            }
-            if (childrenComment["parent"].toString() == comment["commentUuid"].toString()) {
-                childrenComment["createDate"] = FormatTransformer::toDateTime(childrenComment["createDate"]);
-                childrenComment["commentParent"] = childrenComment["parent"].toString();
-                childrenComment.remove("parent");
-                childrens.append(childrenComment);
-            }
-        }
-        comment["childrens"] = childrens;
-        rebuildArr.append(comment);
-    }
+    QJsonArray comments = result.value("commentFile").toArray();
+    QJsonArray rebuildArr = commentDataProcess(comments);
     fileInfoReplyDone(true, status, netDiskPath);
     commentReplyDone(true, rebuildArr);
 }
 
-void ReplyParser::m3u8IndexProcess(QByteArray data)
+void ReplyParser::m3u8IndexProcess(ReplyMeta meta, QByteArray data)
 {
     HlsIndex* index = new HlsIndex();
     index->setData(data.data());
     index->setUrl("http://192.168.10.110:8069/cloudmovie/interrogationRoom/V1/index.m3u8");
+    index->setAuditFileFolderUuid(meta.userData2);
     QRegExp re("#EXTINF:.*\\n.*\\n");
     // 逗号后的换行符方便处理
     QString tmp = QString::fromLocal8Bit(data);
@@ -297,14 +267,13 @@ void ReplyParser::tsFileProcess(ReplyMeta meta, QByteArray data)
 void ReplyParser::mediaInfoProcess(QByteArray data)
 {
     QString content = QString::fromLocal8Bit(data);
+    //qDebug() << content;
     QRegExp re("nb_frames=\\d*");
     re.indexIn(content);
     int nbFrames = re.cap(0).replace("nb_frames=", "").toInt();
     re.setPattern("avg_frame_rate=\\d*");
     re.indexIn(content);
-    QString avgFrameRate = re.cap(0).replace("avg_frame_rate=", "");
-    QStringList tmp = avgFrameRate.split("/");
-    int frameRate = tmp[0].toInt() / tmp[1].toInt();
+    int frameRate = re.cap(0).replace("avg_frame_rate=", "").toInt();
     re.setPattern("sample_rate=\\d*");
     re.indexIn(content);
     QString sampleRate = re.cap(0).replace("sample_rate=", "");
@@ -320,6 +289,84 @@ void ReplyParser::mediaInfoProcess(QByteArray data)
     ret["video"] = video;
     ret["audio"] = audio;
     mediaInfoReplyDone(true, ret);
+}
+
+void ReplyParser::stakeholderProcess(QByteArray data)
+{
+    QJsonParseError json_error;
+    QJsonDocument doc = QJsonDocument::fromJson(data, &json_error);
+    QJsonObject root = doc.object();
+    if (root.value("type") != "success") {
+        stakeholderReplyDone(false);
+        return;
+    }
+    QJsonArray stakeholderList = root["result"].toArray();
+    if (stakeholderList.size() < 0) {
+        stakeholderReplyDone(false);
+        return;
+    }
+    stakeholderReplyDone(true, stakeholderList);
+}
+
+void ReplyParser::commentUploadProcess(QByteArray data)
+{
+    QJsonParseError json_error;
+    QJsonDocument doc = QJsonDocument::fromJson(data, &json_error);
+    QJsonObject root = doc.object();
+    if (root.value("type") != "success") {
+        commentUploadReplyDone(false, root.value("message").toString());
+    }
+    else {
+        commentUploadReplyDone(true, root.value("message").toString());
+    }
+}
+
+void ReplyParser::commentRefreshProcess(QByteArray data)
+{
+    QJsonParseError json_error;
+    QJsonDocument doc = QJsonDocument::fromJson(data, &json_error);
+    QJsonObject root = doc.object();
+    if (root.value("type") != "success") {
+        return;
+    }
+    QJsonArray result = root.value("result").toArray();
+    QJsonArray rebuildArr = commentDataProcess(result);
+    commentReplyDone(true, rebuildArr);
+}
+
+void ReplyParser::versionProcess(QByteArray data)
+{
+    QJsonParseError json_error;
+    QJsonDocument doc = QJsonDocument::fromJson(data, &json_error);
+    QJsonObject root = doc.object();
+    if (root.value("type") != "success") {
+        stakeholderReplyDone(false);
+        return;
+    }
+    QJsonObject result = root["result"].toObject();
+    QString auditContentUuid = result.value("auditContentUuid").toString();
+    QJsonArray versionsList = result.value("versionList").toArray();
+
+    QJsonArray rebuildArr;
+    for (int i = 0; i < versionsList.size(); i++) {
+        QJsonObject rebuildObj;
+        QJsonObject obj = versionsList[i].toObject();
+        rebuildObj["auditContentUuid"] = auditContentUuid;
+        rebuildObj["versionId"] = obj.value("versionId").toInt();
+        rebuildObj["versionUuid"] = obj.value("versionUuid").toString();
+        rebuildObj["versionName"] = obj.value("versionName").toString();
+        rebuildObj["auditFileFolderUuid"] = obj.value("auditFileFolder").toObject().value("auditFileFolderUuid").toString();
+        rebuildObj["uuid"] = obj.value("auditFileFolder").toObject().value("auditFileFolder").toObject().value("uuid").toString();
+        rebuildObj["fileSuffix"] = FormatTransformer::getMediaTypeBySuffix(
+                    obj.value("auditFileFolder").toObject().value("auditFileFolder").toObject().value("fileSuffix").toString());
+        rebuildObj["name"] = obj.value("auditFileFolder").toObject().value("auditFileFolder").toObject().value("name").toString();
+        rebuildObj["uploadUuid"] = obj.value("auditFileFolder").toObject().value("auditFileFolder").toObject().value("uploadUuid").toString();
+        rebuildObj["netDiskPath"] = obj.value("auditFileFolder").toObject().value("auditFileFolder").toObject().value("netDiskPath").toString();
+        rebuildObj["status"] = obj.value("auditFileFolder").toObject().value("auditFileFolder").toObject().value("status").toString();
+        rebuildObj["imageUrl"] = obj.value("auditFileFolder").toObject().value("auditFileFolder").toObject().value("image").toString();
+        rebuildArr.append(rebuildObj);
+    }
+    versionReplyDone(true, rebuildArr);
 }
 
 
@@ -351,7 +398,7 @@ void ReplyParser::onReplied(ReplyMeta meta, QByteArray content, QNetworkReply::N
         fileInfoProcess(content);
         break;
     case DataType::M3U8:
-        m3u8IndexProcess(content);
+        m3u8IndexProcess(meta, content);
         break;
     case DataType::TS:
         if (error == QNetworkReply::TimeoutError) {
@@ -364,5 +411,63 @@ void ReplyParser::onReplied(ReplyMeta meta, QByteArray content, QNetworkReply::N
     case DataType::MEDIA_INFO:
         mediaInfoProcess(content);
         break;
+    case DataType::FILE_STAKEHOLDER:
+        stakeholderProcess(content);
+        break;
+    case DataType::COMMENT_UPLOAD:
+        commentUploadProcess(content);
+        break;
+    case DataType::REFRESH_COMMENT:
+        commentRefreshProcess(content);
+        break;
+    case DataType::FILE_VERSION:
+        versionProcess(content);
+        break;
     }
+}
+
+QJsonArray ReplyParser::commentDataProcess(QJsonArray comments)
+{
+    QJsonArray parentArr;
+    QJsonArray rebuildArr;
+    for (int i = 0; i < comments.size(); i++) {
+        QJsonObject comment = comments[i].toObject();
+        // 筛选主评论（无父级评论）
+        if (comment["parent"].isBool()) {
+            comment["commentParent"] = comment["parent"].toBool();
+            comment.remove("parent");
+            parentArr.append(comment);
+        }
+    }
+    for(int i = 0; i < parentArr.size(); i++) {
+        QJsonObject comment = parentArr[i].toObject();
+        comment["createDate"] = FormatTransformer::toDateTime(comment["createDate"]);
+
+        QJsonArray childrens;
+        for (int j = 0; j < comments.size(); j++) {
+            QJsonObject prototype = comments[j].toObject();
+            if (prototype["parent"].isBool()){
+                continue;
+            }
+            if (prototype["parent"].toString() != comment["commentUuid"].toString()) {
+                continue;
+            }
+            QJsonObject childrenComment;
+            childrenComment["childUuid"] = prototype["commentUuid"].toString();
+            childrenComment["childParent"] = prototype["parent"].toString();
+            childrenComment["childSender"] = prototype["commentSendUser"].toObject();
+            childrenComment["childReceiver"] = prototype["commentTheReceivingUser"].toObject();
+            childrenComment["childDetails"] = prototype["commentDetails"].toString();
+            childrenComment["childCreateDate"] = FormatTransformer::toDateTime(prototype["createDate"]);
+            childrenComment["childOpType"] = prototype["operationType"].toInt();
+            childrenComment["childPrintscreen"] = prototype["printscreen"].toString();
+            childrenComment["childStakeholder"] = prototype["stakeholder"].toObject();
+            childrenComment["childStart"] = prototype["start"].toString();
+            childrenComment["childEnd"] = prototype["end"].toString();
+            childrens.append(childrenComment);
+        }
+        comment["childrens"] = childrens;
+        rebuildArr.append(comment);
+    }
+    return rebuildArr;
 }

@@ -1,4 +1,4 @@
-import QtQuick 2.0
+﻿import QtQuick 2.0
 import QtQuick.Controls 2.0
 import QtQuick.Shapes 1.14
 import Toou2D 1.0
@@ -289,11 +289,16 @@ Rectangle {
             else {
                 runtimeCtx.setAuditContentUuid(auditContentUuid);
                 runtimeCtx.setVersionUuid(versionUuid);
+                runtimeCtx.setVersionName(versionName);
                 runtimeCtx.setAuditFileFolderUuid(auditFileFolderUuid);
                 runtimeCtx.setFileName(name);
-                root.goReview();
+                runtimeCtx.setFileType(fileSuffix);
                 httpFunctions.getFileInfo(auditFileFolderUuid);
-                httpFunctions.getIndex("", auditFileFolderUuid);
+                httpFunctions.getFileVersions(auditContentUuid);
+                if (fileSuffix == "video" || fileSuffix == "audio") {
+                    httpFunctions.getIndex(auditFileFolderUuid);
+                }
+                root.goReview();
             }
         }
     }

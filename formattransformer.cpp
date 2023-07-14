@@ -1,6 +1,8 @@
 ﻿#include "formattransformer.h"
 #include <QDateTime>
 #include <QTime>
+#include <QBuffer>
+#include "def.h"
 
 FormatTransformer::FormatTransformer(QObject *parent) : QObject(parent)
 {
@@ -39,6 +41,52 @@ QString FormatTransformer::sec2Time(int seconds)
     return time;
 }
 
+QString FormatTransformer::timestamp2RelTime(QString time)
+{
+    double curTime = QDateTime::currentDateTime().toSecsSinceEpoch();
+    double logTime = QDateTime::fromString(time, "yyyy/MM/dd hh:mm:ss").toSecsSinceEpoch();
+
+    int diff_sec = curTime - logTime;
+    int deff_min = diff_sec / 60;
+    if (deff_min < 60) {
+        return QString("%1 分钟前").arg(deff_min);
+    }
+    // >24h
+    else if (deff_min / 60 / 24 > 0) {
+        return QString("%1 天前").arg(deff_min / 60 / 24);
+    }
+    else {
+        return QString("%1 小时前").arg(deff_min / 60);
+    }
+}
+
+QString FormatTransformer::image2Base64(QImage image)
+{
+    QByteArray ba;
+    QBuffer buf(&ba);
+    buf.open(QIODevice::WriteOnly);
+
+    image.save(&buf, "png");
+    QByteArray ba2 = ba.toBase64();
+    QString b64str = QString::fromLatin1(ba2);
+
+    return b64str;
+}
+
+QString FormatTransformer::image2Base64FromLocalFile(QString filePath)
+{
+    QImage img(filePath);
+    QByteArray ba;
+    QBuffer buf(&ba);
+    buf.open(QIODevice::WriteOnly);
+
+    img.save(&buf, "png");
+    QByteArray ba2 = ba.toBase64();
+    QString b64str = QString::fromLatin1(ba2);
+
+    return b64str;
+}
+
 QString FormatTransformer::toDateTime(QJsonValue time)
 {
     qint64 timeStamp = time.toDouble();
@@ -47,19 +95,14 @@ QString FormatTransformer::toDateTime(QJsonValue time)
 
 QString FormatTransformer::getMediaTypeBySuffix(QString suffix)
 {
-    if(suffix.contains("mp4") ||
-       suffix.contains("mov")) {
+    if(VideoSuffix.contains(suffix)) {
         return "video";
     }
-    else if (suffix.contains("wav") ||
-             suffix.contains("aac") ||
-             suffix.contains("mp3")) {
+    else if (AudioSuffix.contains(suffix)) {
         return "audio";
     }
-    else if (suffix.contains("jpg") ||
-             suffix.contains("jpeg") ||
-             suffix.contains("png")) {
-        return "picture";
+    else if (ImageSuffix.contains(suffix)) {
+        return "image";
     }
     else {
         return "other";

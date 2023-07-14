@@ -1,8 +1,10 @@
-#ifndef DEF_H
+﻿#ifndef DEF_H
 #define DEF_H
 
 #include <QString>
 #include <QList>
+#include <QJsonObject>
+#include <QJsonArray>
 
 enum DataType {
     M3U8,
@@ -15,30 +17,26 @@ enum DataType {
     COMPANY_PROJECTS,
     PROJECT_FILES,
     REVIEW_STATUS,
-    FILE_INFO
+    FILE_INFO,
+    FILE_STAKEHOLDER,
+    COMMENT_UPLOAD,
+    REFRESH_COMMENT,
+    FILE_VERSION
 };
 enum Protocol {
     HTTP,
     HTTPS
 };
 
-enum FileType {
-    VIDEO,
-    AUDIO,
-    IMAGE,
-    NONE
-};
-
-
-const QVector<QString> ImageSuffix = {"jpg", "png", "jpeg"};
-const QVector<QString> VideoSuffix = {"mp4", "mkv"};
-const QVector<QString> AudioSuffix = {"wav", "mp3"};
+const QVector<QString> ImageSuffix = {".jpg", ".png", ".jpeg"};
+const QVector<QString> VideoSuffix = {".mp4", ".mkv"};
+const QVector<QString> AudioSuffix = {".wav", ".mp3", ".aac"};
 
 struct ReplyMeta {
     DataType type;
     void* userData;
+    QString userData2;
 };
-
 
 struct Company {
     int id;
@@ -80,5 +78,41 @@ struct Project {
     QString imageUrl;
 };
 
+struct Comment {
+    QString commentUuid;
+    QString parentUuid;
+    QJsonObject sender;
+    QJsonObject receiver;
+    QString details;
+    QString createDate;
+    int operationType;
+    QString printScreen;
+    QJsonArray stakeHolder;
+    QString start;
+    QString end;
+    QJsonArray childrens;
+};
+
+struct Stakeholder {
+    int id;
+    QString name;
+    QString uuid;
+    QString imageUrl;
+};
+
+struct Version {
+    QString auditContentUuid;
+    int versionId;
+    QString versionUuid;
+    QString versionName;
+    QString auditFileFolderUuid;
+    QString uuid;
+    QString fileSuffix;
+    QString name;
+    QString uploadUuid;
+    QString netDiskPath;
+    QString status;
+    QString imageUrl;
+};
 
 #endif // DEF_H

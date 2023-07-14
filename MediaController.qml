@@ -2,17 +2,19 @@
 import Toou2D 1.0
 import QtQuick.Controls 2.0
 import VideoPlayer 1.0
+import RuntimeContext 1.0
 
 TRectangle {
     id: media_toolbar
     width: parent.width
     height: 45
-    anchors.top: media_comment_stamp.bottom
-    anchors.left: parent.left
-    anchors.horizontalCenter: parent.horizontalCenter
-    enabled: media_player.locked == 0 ? true : false
+//    anchors.top: media_comment_stamp.bottom
+//    anchors.left: parent.left
+//    anchors.horizontalCenter: parent.horizontalCenter
+//    enabled: true
+        //media_player.locked == 0 ? true : false
     color: "#283046"
-    radius: workstation_page.isFullScreen ? 0 : 3
+    radius: parent.isFullScreen ? 0 : 3
 
     property alias timeDisplay: media_time
     property alias playBtn: play_btn
@@ -46,7 +48,7 @@ TRectangle {
                 break;
             case VideoPlayer.PAUSE:
             case VideoPlayer.STOP:
-                workstation_page.paintMode = false;
+                review.isPaintEnabled = false;
                 video_player.play();
                 break;
             }
@@ -54,43 +56,43 @@ TRectangle {
     }
 
     TImageButton {
-        id: media_fast_backward_btn
+        id: backward_btn
         width: 32
         height: 32
         anchors.left: play_btn.right
         anchors.leftMargin: 16
         anchors.top: parent.top
         anchors.topMargin: 5 + toolbar_rectmask.height
-        source: "qrc:/resources/icon/backward.png"
+        source: "qrc:/icon/backward"
 
         onClicked: {
             switch(media_time.currentIndex) {
             case 0:
-                media_player.seek(media_progress.value - 10);
+                video_player.seekTime(time_slider.value - 10);
                 break;
             case 1:
-                media_player.seek(media_progress.value - 1, true);
+                video_player.seekPreFrame();
                 break;
             }
         }
     }
 
     TImageButton {
-        id: media_fast_forward_btn
+        id: forward_btn
         width: 32
         height: 32
-        anchors.left: media_fast_backward_btn.right
+        anchors.left: backward_btn.right
         anchors.top: parent.top
         anchors.topMargin: 5 + toolbar_rectmask.height
-        source: "qrc:/resources/icon/forward.png"
+        source: "qrc:/icon/forward"
 
         onClicked: {
             switch(media_time.currentIndex) {
             case 0:
-                media_player.seek(media_progress.value + 10);
+                video_player.seekTime(time_slider.value + 10);
                 break;
             case 1:
-                media_player.seek(media_progress.value + 1, true);
+                video_player.seekNextFrame();
                 break;
             }
         }
@@ -101,14 +103,15 @@ TRectangle {
         property string time_str: ""
         width: 150
         height: 42
-        anchors.left: media_fast_forward_btn.right
+        anchors.left: forward_btn.right
         anchors.leftMargin: 16
         anchors.top: parent.top
         anchors.topMargin: toolbar_rectmask.height
+
         displayText: currentIndex == 0 ?
-             formatTransformer.sec2Time(video_player.currentTime.toFixed(0)) +
+             formatTransformer.sec2Time(video_player.currentTime) +
                          " / " + formatTransformer.sec2Time(video_player.durationTime) :
-             media_player.current_frame + " / " + media_player.duration_frame
+             video_player.currentFrame + " / " + video_player.durationFrame
 
         model: [
             "TIME",
@@ -122,7 +125,7 @@ TRectangle {
         indicator: TImageButton {
             width: 16
             height: 16
-            source: "qrc:/resources/icon/media_time_indicator.png"
+            source: "qrc:/icon/media_time_indicator"
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -198,16 +201,6 @@ TRectangle {
                 radius: 5
             }
         }
-        onCurrentIndexChanged: {
-            switch(currentIndex) {
-            case 0:
-                media_player.setPlayMode(Player.TIME);
-                break;
-            case 1:
-                media_player.setPlayMode(Player.FRAME);
-                break;
-            }
-        }
     }
 
     TImageButton {
@@ -217,11 +210,12 @@ TRectangle {
         anchors.right: parent.right
         anchors.rightMargin: 24
         anchors.verticalCenter: parent.verticalCenter
-        source: "qrc:/resources/icon/fullscreen.png"
+        source: "qrc:/icon/fullscreen"
         onClicked: {
-            fullScreen();
+            review.fullScreen();
         }
     }
+
     TImageButton {
         id: media_volume
         width: 16
@@ -229,7 +223,9 @@ TRectangle {
         anchors.right: media_full_screen.left
         anchors.rightMargin: 20
         anchors.verticalCenter: parent.verticalCenter
-        source: "qrc:/resources/icon/audio.png"
+        source: media_volume_slider.value === 0 ?
+                    "qrc:/icon/volume_zero" :
+                    "qrc:/icon/volume"
         onClicked: {
             if (media_volume_popup.visible) {
                 media_volume_popup.visible = false;
@@ -251,6 +247,7 @@ TRectangle {
         anchors.bottom: media_volume.top
         anchors.horizontalCenter: media_volume.horizontalCenter
         visible: false
+        z: 2
 
         Text {
             id: media_volume_text
@@ -280,7 +277,7 @@ TRectangle {
             anchors.bottomMargin: 5
             anchors.horizontalCenter: parent.horizontalCenter
             onValueChanged: {
-                media_player.setVolume(value)
+                video_player.setVolume(value)
             }
 
             background: Rectangle {
@@ -385,6 +382,7 @@ TRectangle {
             bottomPadding: 10
             leftPadding: 0
             rightPadding: 0
+            z: 2
 
             contentItem: ListView {
                 width: parent.width
@@ -409,19 +407,19 @@ TRectangle {
         onCurrentIndexChanged:  {
             switch(currentIndex) {
             case 0 :
-                media_player.setSpeed(3.0);
+                video_player.setSpeed(3.0);
                 break;
             case 1:
-                media_player.setSpeed(2.0);
+                video_player.setSpeed(2.0);
                 break;
             case 2:
-                media_player.setSpeed(1.5);
+                video_player.setSpeed(1.5);
                 break;
             case 3:
-                media_player.setSpeed(1.0);
+                video_player.setSpeed(1.0);
                 break;
             case 4:
-                media_player.setSpeed(0.5);
+                video_player.setSpeed(0.5);
                 break;
             }
         }
@@ -519,6 +517,7 @@ TRectangle {
             }
         }
     }
+
     TButton {
         id: exit_comment_edit_mode
         width: 122
@@ -534,11 +533,12 @@ TRectangle {
         label.font.pixelSize: 14
         label.font.family: local_font.name
         label.font.weight: Font.DemiBold
-        visible: media_comment_stamp.editMode
+        visible: comment_timeline.editMode
         onClicked: {
-            media_comment_stamp.editMode = false;
+            comment_timeline.editMode = false;
         }
     }
+
     Text {
         id: comment_edit_info
         width: 100
@@ -546,15 +546,31 @@ TRectangle {
         anchors.right: exit_comment_edit_mode.left
         anchors.rightMargin: 20
         anchors.verticalCenter: parent.verticalCenter
-        text: utils.sec2Time(media_comment_stamp.start) +
+        text: formatTransformer.sec2Time(comment_timeline.start) +
               " - " +
-              utils.sec2Time(media_comment_stamp.end)
+              formatTransformer.sec2Time(comment_timeline.end)
         color: "#FFFFFF"
         font.pixelSize: 14
         font.family: local_font.name
         font.weight: Font.DemiBold
         verticalAlignment: Text.AlignVCenter
         horizontalAlignment: Text.AlignHCenter
-        visible: media_comment_stamp.editMode
+        visible: comment_timeline.editMode
+    }
+
+    Connections {
+        target: runtimeCtx
+        onFileTypeChanged: {
+            if (runtimeCtx.getFileType() === RuntimeContext.VIDEO) {
+                media_time.indicator.visible = true;
+                media_time.popup.enabled = true;
+                media_quality.visible = true;
+            }
+            else if (runtimeCtx.getFileType() === RuntimeContext.AUDIO) {
+                media_time.indicator.visible = false;
+                media_time.popup.enabled = false;
+                media_quality.visible = false;
+            }
+        }
     }
 }

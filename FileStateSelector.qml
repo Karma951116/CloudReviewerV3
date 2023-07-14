@@ -1,4 +1,4 @@
-import QtQuick 2.0
+﻿import QtQuick 2.0
 import QtQuick.Controls 2.0
 import Toou2D 1.0
 
@@ -41,7 +41,7 @@ ComboBox {
     indicator: TImageButton {
         width: 16
         height: 16
-        source: "qrc:/resources/icon/arrow_down.png"
+        source: "qrc:/icon/arrow_down"
         anchors.right: parent.right
         anchors.rightMargin: 6
         anchors.verticalCenter: parent.verticalCenter

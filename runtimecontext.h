@@ -1,4 +1,4 @@
-#ifndef RUNTIMECONTEXT_H
+﻿#ifndef RUNTIMECONTEXT_H
 #define RUNTIMECONTEXT_H
 
 #include <QObject>
@@ -8,6 +8,13 @@ class RuntimeContext : public QObject
 {
     Q_OBJECT
 public:
+    enum FileType {
+        VIDEO,
+        AUDIO,
+        IMAGE,
+        NONE
+    };
+    Q_ENUM(FileType);
     explicit RuntimeContext(QObject *parent = nullptr);
 
     Q_PROPERTY(QString projectName READ getProjectName NOTIFY projectNameChanged)
@@ -43,6 +50,11 @@ public:
     Q_INVOKABLE FileType getFileType() const;
     Q_INVOKABLE void setFileType(const FileType &fileType);
     Q_INVOKABLE void setFileType(QString fileSuffix);
+
+    Q_INVOKABLE QString getEmojis();
+    Q_INVOKABLE QString getVersionName() const;
+    Q_INVOKABLE void setVersionName(const QString &versionName);
+
 private:
     QString companyUuid_;
     QString companyName_;
@@ -50,6 +62,7 @@ private:
     QString projectName_;
     QString auditContentUuid_;
     QString versionUuid_;
+    QString versionName_;
     QString auditFileFolderUuid_;
     QString attachmentUuid_;
     QString fileName_;
@@ -58,6 +71,7 @@ private:
 signals:
     void projectNameChanged();
     void fileNameChanged();
+    void fileTypeChanged();
 };
 
 #endif // RUNTIMECONTEXT_H

@@ -1,4 +1,7 @@
+﻿#include <QJsonDocument>
+
 #include "runtimecontext.h"
+#include "emojis.h"
 
 RuntimeContext::RuntimeContext(QObject *parent) : QObject(parent)
 {
@@ -97,7 +100,7 @@ void RuntimeContext::setFileName(const QString &fileName)
     fileNameChanged();
 }
 
-FileType RuntimeContext::getFileType() const
+RuntimeContext::FileType RuntimeContext::getFileType() const
 {
     return fileType_;
 }
@@ -105,21 +108,51 @@ FileType RuntimeContext::getFileType() const
 void RuntimeContext::setFileType(const FileType &fileType)
 {
     fileType_ = fileType;
+    fileTypeChanged();
 }
 
 void RuntimeContext::setFileType(QString fileSuffix)
 {
-    if (VideoSuffix.contains(fileSuffix)) {
+    if (fileSuffix == "video") {
         fileType_ = VIDEO;
     }
-    else if (AudioSuffix.contains(fileSuffix)) {
+    else if (fileSuffix == "audio") {
         fileType_ = AUDIO;
     }
-    else if (ImageSuffix.contains(fileSuffix)) {
+    else if (fileSuffix == "image") {
         fileType_ = IMAGE;
     }
     else {
         fileType_ = NONE;
     }
+    fileTypeChanged();
+}
+
+QString RuntimeContext::getEmojis()
+{
+    QJsonArray emoji_arr;
+    int count = 0;
+    for (QVector<uint> vector : emojis) {
+        if (count > 200) break;
+        QString emoji;
+        for(uint code : vector) {
+            emoji.append(QString::fromUcs4(&code, 1));
+        }
+        emoji_arr.append(emoji);
+        count++;
+    }
+    QJsonDocument doc;
+    doc.setArray(emoji_arr);
+    return QString::fromUtf8(doc.toJson(QJsonDocument::Compact).constData());
+}
+
+QString RuntimeContext::getVersionName() const
+{
+    return versionName_;
+}
+
+void RuntimeContext::setVersionName(const QString &versionName)
+{
+    versionName_ = versionName;
 }
 

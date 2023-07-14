@@ -50,7 +50,11 @@ public:
 
     QList<double>* getTimeTable() const;
 
+    QString getAuditFileFolderUuid() const;
+    void setAuditFileFolderUuid(const QString &auditFileFolderUuid);
+
 private:
+    QString auditFileFolderUuid_;
     QString url_;
     char* data_;
     int fetchedCount_;

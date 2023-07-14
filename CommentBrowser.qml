@@ -1,72 +1,56 @@
-import QtQuick 2.0
+﻿import QtQuick 2.0
 import SortFilterProxyModel 0.2
+import QtQuick.Controls 2.14
+import Toou2D 1.0
 
-ListView {
-    id: workstation_comment_display
-    property var currentComments;
+Item {
+    id: comment_display_panel
+    implicitWidth: 360
+    implicitHeight: 1018
 
-    clip: true
-    spacing: 16
-    ListModel {
-        id: main_comment_model
+    CommentBrowserToolbar {
+        id: comment_toolbar
+        width: 360
+        height: 48
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
     }
 
-    SortFilterProxyModel {
-        id: main_comment_proxy_model
-        sourceModel: main_comment_model
-        filters: [
-            RegExpFilter {
-                roleName: "commentDetails"
-                pattern: "^@" + global_prop.userData["username"] + " "
-                enabled: workstation_at_me_btn.checked
-            }
-        ]
-        sorters: [
-            StringSorter {
-                roleName: "createDate"
-                sortOrder: workstation_comment_sort.currentIndex == 0 ?
-                               Qt.AscendingOrder : Qt.DescendingOrder
-            }
-        ]
-    }
-    model: main_comment_proxy_model
+    ListView {
+        id: comment_display
+        property var currentComments;
+        width: 360
+        height: 970
+        anchors.top: comment_toolbar.bottom
+        anchors.topMargin: 10
+        anchors.horizontalCenter: parent.horizontalCenter
+        clip: true
+        spacing: 16
 
-//    delegate: Card_comment {
-//        anchors.horizontalCenter: parent.horizontalCenter
-//    }
+        SortFilterProxyModel {
+            id: main_comment_proxy_model
+            sourceModel: commentModel
+            filters: [
+                RegExpFilter {
+                    roleName: "commentDetails"
+                    pattern: "^@" + clientUser.userName + " "
+                    enabled: comment_toolbar.atMe
+                }
+            ]
+            sorters: [
+                StringSorter {
+                    roleName: "createDate"
+                    sortOrder: comment_toolbar.commentSortIndex == 0 ?
+                                   Qt.AscendingOrder : Qt.DescendingOrder
+                }
+            ]
+        }
+        model: main_comment_proxy_model
 
-    Component.onCompleted: {
-        request_tools.getFileInfo(global_prop.auditFileFolderUuid)
-    }
-    Connections {
-        target: request_tools
-        onDataBack: {
-            if (usageType === HttpRequestTool.FILE_INFO_QUERY ||
-                    usageType === HttpRequestTool.REFRESH_COMMENT) {
-                main_comment_model.clear();
-                var return_data = JSON.parse(data);
-                var commentFile = return_data["commentFile"];
-                workstation_comment_display.currentComments = commentFile;
-                for (var comment_idx in commentFile) {
-                    main_comment_model.append(commentFile[comment_idx]);
-                }
-                // 准备推流
-                if (usageType === HttpRequestTool.FILE_INFO_QUERY){
-                    var fileFolder = return_data["auditFileFolder"];
-                    var fileFolderUuid = fileFolder["auditFileFolderUuid"];
-                    var netPath = fileFolder["netDiskPath"];
-                    request_tools.getRtspFile(fileFolderUuid, netPath);
-                }
-            }
-            if (usageType === HttpRequestTool.GET_RTSP_FILE) {
-                return_data = JSON.parse(data);
-                if (return_data["code"] === 200) {
-                    global_prop.currentPid = return_data["result"]["pid"];
-                }
-                else {
-                    TToast.showWarning(return_data["message"], TTimePreset.LongTime4s);
-                }
-            }
+        delegate: CommentItem {
+            anchors.horizontalCenter: parent.horizontalCenter
         }
     }
 }
+
+

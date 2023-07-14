@@ -36,15 +36,23 @@ public:
     enum PlayState {
         PLAY,
         PAUSE,
-        STOP
+        STOP,
+        WAIT
     };
     Q_ENUM(PlayState);
+    enum PlayMode {
+        VIDEO,
+        AUDIO
+    };
+    Q_ENUM(PlayMode)
+
 
     Q_PROPERTY(double durationTime READ getIndexDurationTime NOTIFY indexDurationTimeChanged)
     Q_PROPERTY(double currentTime READ getIndexCurrentTime NOTIFY indexCurrentTimeChanged)
-//    Q_PROPERTY(double durationFrame READ getIndexDurationFrame NOTIFY indexDurationFrameChanged)
-//    Q_PROPERTY(double currentTime READ getIndexCurrentFrame NOTIFY indexCurrentFrameChanged)
+    Q_PROPERTY(double durationFrame READ getIndexDurationFrame NOTIFY indexDurationFrameChanged)
+    Q_PROPERTY(double currentFrame READ getIndexCurrentFrame NOTIFY indexCurrentFrameChanged)
     Q_PROPERTY(double state READ getState NOTIFY stateChanged)
+    Q_PROPERTY(double mode READ getMode NOTIFY playModeChanged)
 
     VideoPlayer();
 
@@ -79,12 +87,26 @@ public:
 
     Q_INVOKABLE double getIndexDurationTime();
     Q_INVOKABLE double getIndexCurrentTime();
+    Q_INVOKABLE int getIndexDurationFrame();
+    Q_INVOKABLE int getIndexCurrentFrame();
 
-    Q_INVOKABLE void seekTime(int seekPoint);
+    Q_INVOKABLE void seekTime(double seekPoint);
     Q_INVOKABLE void seekFrame(int seekPoint);
+    Q_INVOKABLE void seekPreFrame();
+    Q_INVOKABLE void seekNextFrame();
+
+    Q_INVOKABLE QImage getCurrentImage();
+    Q_INVOKABLE void setCurrentImage(QString imagePath);
 
     bool audioEnd;
     bool videoEnd;
+
+    Q_INVOKABLE void setSpeed(float speed);
+
+    Q_INVOKABLE void setVolume(int volume);
+
+    Q_INVOKABLE PlayMode getMode() const;
+    Q_INVOKABLE void setMode(const PlayMode &mode);
 
 protected:
     virtual void paint(QPainter* painter);
@@ -92,6 +114,7 @@ protected:
 private:
     QImage image_;
     PlayState state_;
+    PlayMode mode_;
 
     HlsIndex* index_;
     int maxDecoderCount_;
@@ -116,8 +139,13 @@ private:
     double audioClock_;
     double aFirstClock_;
     double diff_;
+    int videoCurFrame;
+    int videoStartPts;
+    int videoPtsInterval;
+    int audioPtsInterval;
 
     static int videoPlay(void *arg);
+    void updateCurrentFrame();
 
     int openAudio();
     static void audioCallBack(void* userdata, quint8* stream, int SDL_BufferSize);
@@ -141,6 +169,7 @@ private:
     double correctAudioClock();
 
     static int durationFrameCalc(void *arg);
+
 #ifdef DEBUG
     double tsVolume;
     double FrameVolume;
@@ -148,13 +177,18 @@ private:
 signals:
     void updateImage(QImage image);
     void requestTsFile(QString tsName, TsFile* TS, QString url = nullptr);
+    void requestMediaInfo();
     void firstTsDecoded();
-    void waitNextFrameReady();
+    //void waitNextFrameReady();
     void indexDurationTimeChanged();
     void indexCurrentTimeChanged();
+    void indexDurationFrameChanged();
+    void indexCurrentFrameChanged();
     void videoFinished();
     void stateChanged();
     void durationFrameCalcEnd();
+    void durationTimeReady();
+    void playModeChanged();
 
 public slots:
     void onM3u8ReplyDone(bool success, HlsIndex* index);

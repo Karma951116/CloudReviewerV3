@@ -45,11 +45,30 @@ bool HttpFunctions::postLogin(QString username, QString password)
     request_.setUrl(QUrl(url));
     QJsonObject paramItem;
     paramItem.insert("params", params);
-    map_.insert(manager_->post(request_, QJsonDocument(paramItem).toJson()), ReplyMeta{LOGIN, 0});
+    map_.insert(manager_->post(request_, QJsonDocument(paramItem).toJson()), ReplyMeta{LOGIN, 0, 0});
     return true;
 }
 
 bool HttpFunctions::postPin(QString phone)
+{
+    QString url = urlHead();
+#ifdef DEBUG
+    url += "/cloud_review_test/cloudmovie/interrogationRoom/V1/sendComment";
+#endif
+#ifdef PROD
+    url += "/cloudmovie/interrogationRoom/V1/sendComment";
+#endif
+    QJsonObject params;
+    params.insert("phone", phone);
+    request_.setRawHeader("Content-Type", "application/json");
+    request_.setUrl(QUrl(url));
+    QJsonObject paramItem;
+    paramItem.insert("params", params);
+    map_.insert(manager_->post(request_, QJsonDocument(paramItem).toJson()), ReplyMeta{PIN, 0, 0});
+    return true;
+}
+
+bool HttpFunctions::postSendComment(QString auditFileFolderUuid, QString parentUuid, QString commentSendUserUuid, QString commentReceivingUserUuid, QJsonArray stakeholder, QString commentDetails, QString operationType, QString start, QString end, QString printscreen, QJsonArray attachment)
 {
     QString url = urlHead();
 #ifdef DEBUG
@@ -58,13 +77,28 @@ bool HttpFunctions::postPin(QString phone)
 #ifdef PROD
     url += "/web/send_login_phone_code";
 #endif
-    QJsonObject params;
-    params.insert("phone", phone);
     request_.setRawHeader("Content-Type", "application/json");
-    request_.setUrl(QUrl(url));
+    request_.setUrl(url);
+    QJsonObject params;
+    params.insert("auditFileFolderUuid", auditFileFolderUuid);
+    QJsonObject commentRecords;
+    commentRecords.insert("parent", parentUuid);
+    commentRecords.insert("commentSendUserUuid", commentSendUserUuid);
+    commentRecords.insert("commentTheReceivingUserUuid", commentReceivingUserUuid);
+    commentRecords.insert("stakeholder", stakeholder);
+    commentRecords.insert("commentDetails", commentDetails);
+    commentRecords.insert("operationType", operationType);
+    commentRecords.insert("start", start);
+    commentRecords.insert("end", end);
+
+    //TODO: 图像处理,BASE64或其他形式上传
+    commentRecords.insert("printscreen", printscreen);
+    commentRecords.insert("attachment", attachment);
+
+    params.insert("commentRecord", commentRecords);
     QJsonObject paramItem;
     paramItem.insert("params", params);
-    map_.insert(manager_->post(request_, QJsonDocument(paramItem).toJson()), ReplyMeta{PIN, 0});
+    map_.insert(manager_->post(request_, QJsonDocument(paramItem).toJson()), ReplyMeta{COMMENT_UPLOAD, 0, 0});
     return true;
 }
 
@@ -85,7 +119,7 @@ bool HttpFunctions::getUserCompany()
     qUrl.setUrl(url);
     qUrl.setQuery(qUrlQuery);
     request_.setUrl(qUrl);
-    map_.insert(manager_->get(request_), ReplyMeta{USER_COMPANY, 0});
+    map_.insert(manager_->get(request_), ReplyMeta{USER_COMPANY, 0, 0});
     return true;
 }
 
@@ -108,7 +142,7 @@ bool HttpFunctions::getCompanyProjects(int companyId)
     qUrl.setUrl(url);
     qUrl.setQuery(qUrlQuery);
     request_.setUrl(qUrl);
-    map_.insert(manager_->get(request_), ReplyMeta{COMPANY_PROJECTS, 0});
+    map_.insert(manager_->get(request_), ReplyMeta{COMPANY_PROJECTS, 0, 0});
     return true;
 }
 
@@ -135,7 +169,7 @@ bool HttpFunctions::getProjectFiles(int projectId, QString projectUuid,
     qUrl.setUrl(url);
     qUrl.setQuery(qUrlQuery);
     request_.setUrl(qUrl);
-    map_.insert(manager_->get(request_), ReplyMeta{PROJECT_FILES, 0});
+    map_.insert(manager_->get(request_), ReplyMeta{PROJECT_FILES, 0, 0});
     return true;
 }
 
@@ -158,7 +192,7 @@ bool HttpFunctions::postReviewStatus(QString auditContentUuid, QString versionUu
     params.insert("status", status);
     QJsonObject paramItem;
     paramItem.insert("params", params);
-    map_.insert(manager_->post(request_, QJsonDocument(paramItem).toJson()), ReplyMeta{REVIEW_STATUS, 0});
+    map_.insert(manager_->post(request_, QJsonDocument(paramItem).toJson()), ReplyMeta{REVIEW_STATUS, 0, 0});
     return true;
 }
 
@@ -179,15 +213,65 @@ bool HttpFunctions::getFileInfo(QString auditFileFolderUuid)
     qUrlQuery.addQueryItem("auditFileFolderUuid", auditFileFolderUuid);
     qUrl.setQuery(qUrlQuery);
     request_.setUrl(qUrl);
-    map_.insert(manager_->get(request_), ReplyMeta{FILE_INFO, 0});
+    map_.insert(manager_->get(request_), ReplyMeta{FILE_INFO, 0, 0});
     return true;
 }
 
-void HttpFunctions::getIndex(QString url, QString auditFileFolderUuid)
+bool HttpFunctions::getFileStakeHolder(QString auditContentUuid)
+{
+    QString url = urlHead();
+#ifdef DEBUG
+    url += "/cloud_review_test/cloudmovie/interrogationRoom/V1/getFileStakeholder";
+    request_.setRawHeader("Cookie", "cmc_token=" + accessToken_.toUtf8());
+#endif
+#ifdef PROD
+    url += "/cloudmovie/interrogationRoom/V1/getFileStakeholder";
+    request_.setRawHeader("Cookie", session_id_.toUtf8());
+#endif
+    QUrl qUrl;
+    qUrl.setUrl(url);
+    QUrlQuery qUrlQuery;
+    qUrlQuery.addQueryItem("auditContentUuid", auditContentUuid);
+    qUrl.setQuery(qUrlQuery);
+    request_.setUrl(qUrl);
+    map_.insert(manager_->get(request_), ReplyMeta{FILE_STAKEHOLDER, 0, 0});
+    return true;
+}
+
+bool HttpFunctions::getFileVersions(QString auditContentUuid)
+{
+    QString url = urlHead();
+#ifdef DEBUG
+    url += "/cloud_review_test/cloudmovie/interrogationRoom/V1/getTheHistoricalVersion";
+    request_.setRawHeader("Cookie", "cmc_token=" + accessToken_.toUtf8());
+#endif
+#ifdef PROD
+    url += "/cloudmovie/interrogationRoom/V1/getTheHistoricalVersion";
+    request_.setRawHeader("Cookie", session_id_.toUtf8());
+#endif
+    QUrl qUrl;
+    qUrl.setUrl(url);
+    QUrlQuery qUrlQuery;
+    qUrlQuery.addQueryItem("auditContentUuid", auditContentUuid);
+    qUrl.setQuery(qUrlQuery);
+    request_.setUrl(qUrl);
+    map_.insert(manager_->get(request_), ReplyMeta{FILE_VERSION, 0, 0});
+    return true;
+}
+
+void HttpFunctions::getIndex(QString auditFileFolderUuid)
 {
     QUrl qUrl;
 #ifdef DEBUG
-    qUrl.setUrl("https://s7.fsvod1.com/20221010/ewaGwIfh/1500kb/hls/index.m3u8");
+    if (auditFileFolderUuid == "DA90E58E90AD483BAF81471F27216613") {
+        //qUrl.setUrl("https://s7.fsvod1.com/20221010/ewaGwIfh/1500kb/hls/index.m3u8");
+        QString url = urlHead();
+        url += "/cloud_review_test/cloudmovie/interrogationRoom/V1/index.m3u8";
+        qUrl.setUrl(url);
+    }
+    else if (auditFileFolderUuid == "984E2DAF396847DF97B9EA54D56FFA4A") {
+        qUrl.setUrl("https://cdn14.yzzy-tv-cdn.com/20230406/17211_5d5f0e69/2000k/hls/index.m3u8");
+    }
 #endif
 #ifdef PROD
     qUrl.setUrl("http://192.168.10.110:8069/cloudmovie/interrogationRoom/V1/index.m3u8");
@@ -198,37 +282,50 @@ void HttpFunctions::getIndex(QString url, QString auditFileFolderUuid)
     request_.setRawHeader("Content-Type", "text/html");
     request_.setRawHeader("Cookie", session_id_.toUtf8());
     request_.setUrl(qUrl);
-    map_.insert(manager_->get(request_), ReplyMeta{M3U8, 0});
-#ifdef PROD
-    getMediaInfo(auditFileFolderUuid);
-#endif
+    map_.insert(manager_->get(request_), ReplyMeta{M3U8, 0, auditFileFolderUuid});
 }
 
 void HttpFunctions::getMediaInfo(QString auditFileFolderUuid)
 {
     QUrl qUrl;
-    qUrl.setUrl("192.168.10.110:8069/cloudmovie/interrogationRoom/V1/index.txt");
+#ifdef DEBUG
+    qUrl.setUrl("http://127.0.0.1:6344/cloud_review_test/cloudmovie/interrogationRoom/V1/index");
+#endif
+#ifdef PROD
+    qUrl.setUrl("http://192.168.10.110:8069/cloudmovie/interrogationRoom/V1/index.txt");
+#endif
     QUrlQuery qUrlQuery;
     qUrlQuery.addQueryItem("auditFileFolderUuid", auditFileFolderUuid);
     qUrl.setQuery(qUrlQuery);
     request_.setRawHeader("Content-Type", "text/plain");
     request_.setRawHeader("Cookie", session_id_.toUtf8());
     request_.setUrl(qUrl);
-    map_.insert(manager_->get(request_), ReplyMeta{MEDIA_INFO, 0});
+    map_.insert(manager_->get(request_), ReplyMeta{MEDIA_INFO, 0, 0});
 }
 
-void HttpFunctions::getTs(QString tsName, TsFile *ts, QString url = nullptr)
+void HttpFunctions::getTs(QString tsName, TsFile *ts, QString auditFileFolderUuid)
 {
     QUrl qUrl;
 #ifdef DEBUG
-    qUrl.setUrl("https://s7.fsvod1.com" + tsName);
+    if (auditFileFolderUuid == "DA90E58E90AD483BAF81471F27216613") {
+        //qUrl.setUrl("https://s7.fsvod1.com" + tsName);
+        QString url = urlHead();
+        url += "/cloud_review_test/cloudmovie/interrogationRoom/V1/ts";
+        qUrl.setUrl(url);
+        QUrlQuery qUrlQuery;
+        qUrlQuery.addQueryItem("fileName", tsName);
+        qUrl.setQuery(qUrlQuery);
+    }
+    else if (auditFileFolderUuid == "984E2DAF396847DF97B9EA54D56FFA4A") {
+        qUrl.setUrl("https://cdn14.yzzy-tv-cdn.com/20230406/17211_5d5f0e69/2000k/hls/" + tsName);
+    }
 #endif
 #ifdef PROD
-    //qUrl.setUrl("http://192.168.10.110:8069/cloudmovie/interrogationRoom/V1/index.ts");
-    //QUrlQuery qUrlQuery;
-    //qUrlQuery.addQueryItem("auditFileFolderUuid", "F923E2CAE3E44C798E918D23129A5C4B");
-    //qUrlQuery.addQueryItem("TsName", tsName);
-    //qUrl.setQuery(qUrlQuery);
+    qUrl.setUrl("http://192.168.10.110:8069/cloudmovie/interrogationRoom/V1/index.ts");
+    QUrlQuery qUrlQuery;
+    qUrlQuery.addQueryItem("auditFileFolderUuid", auditFileFolderUuid);
+    qUrlQuery.addQueryItem("TsName", tsName);
+    qUrl.setQuery(qUrlQuery);
 #endif
     request_.setRawHeader("Content-Type", "video/mp2t");
     request_.setRawHeader("Cookie", session_id_.toUtf8());
@@ -236,7 +333,7 @@ void HttpFunctions::getTs(QString tsName, TsFile *ts, QString url = nullptr)
     QNetworkReply* reply = manager_->get(request_);
 //    ReplyTimeout* timeout = new ReplyTimeout(reply, 3000);
 //    connect(timeout, &ReplyTimeout::timeout, this, &HttpFunctions::onTsTimeout);
-    map_.insert(reply, ReplyMeta{TS, ts});
+    map_.insert(reply, ReplyMeta{TS, ts, 0});
     ts->setFetchState(TsFile::TsState::FETCHING);
 }
 
@@ -245,7 +342,26 @@ bool HttpFunctions::getNetworkImage(QString imageUrl, QString uuid)
     QUrl url;
     url.setUrl(imageUrl);
     request_.setUrl(url);
-    map_.insert(manager_->get(request_), ReplyMeta{NETWORK_IMAGE, &uuid});
+    map_.insert(manager_->get(request_), ReplyMeta{NETWORK_IMAGE, 0, uuid});
+    return true;
+}
+
+bool HttpFunctions::getRefreshComment(QString auditFileFolderUuid)
+{
+    QUrl qUrl;
+#ifdef DEBUG
+    qUrl.setUrl("/cloud_review_test/cloudmovie/interrogationRoom/V1/refreshTheCommentInformation");
+    request_.setRawHeader("Cookie", "cmc_token=" + accessToken_.toUtf8());
+#endif
+#ifdef PROD
+    qUrl.setUrl("/cloudmovie/interrogationRoom/V1/refreshTheCommentInformation");
+    request_.setRawHeader("Cookie", session_id_.toUtf8());
+#endif
+    QUrlQuery qUrlQuery;
+    qUrlQuery.addQueryItem("auditFileFolderUuid", auditFileFolderUuid);
+    qUrl.setQuery(qUrlQuery);
+    request_.setUrl(qUrl);
+    map_.insert(manager_->get(request_), ReplyMeta{REFRESH_COMMENT, 0, 0});
     return true;
 }
 
@@ -276,22 +392,23 @@ void HttpFunctions::onUpdateTokens(QString accessToken, QString refreshToken)
     refreshToken_ = refreshToken;
 }
 
-void HttpFunctions::onRequestTsFile(QString tsName, TsFile *Ts, QString url)
+void HttpFunctions::onRequestTsFile(QString tsName, TsFile *Ts, QString auditFileFolderUuid)
 {
-    getTs(tsName, Ts, url);
+    getTs(tsName, Ts, auditFileFolderUuid);
 }
 
 
 void HttpFunctions::onRequestFinished(QNetworkReply *reply)
 {
     getSessionId(reply);
-    replied(map_.value(reply), reply->readAll(), reply->error());
+    ReplyMeta meta = map_.value(reply);
+    replied(meta, reply->readAll(), reply->error());
 }
 
-void HttpFunctions::onTsTimeout(QNetworkReply *reply)
-{
-    TsFile* file = (TsFile*)map_.value(reply).userData;
-    getTs(file->fileName(), file);
-    reply->abort();
-    reply->deleteLater();
-}
+//void HttpFunctions::onTsTimeout(QNetworkReply *reply)
+//{
+//    TsFile* file = (TsFile*)map_.value(reply).userData;
+//    getTs(file->fileName(), file);
+//    reply->abort();
+//    reply->deleteLater();
+//}

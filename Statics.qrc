@@ -3,22 +3,22 @@
         <file alias="arrow_down">statics/icon/arrow_down.png</file>
         <file alias="arrow_right">statics/icon/arrow_right.png</file>
         <file>statics/icon/audio.png</file>
-        <file>statics/icon/backward.png</file>
+        <file alias="backward">statics/icon/backward.png</file>
         <file alias="bell">statics/icon/bell.png</file>
-        <file>statics/icon/canvas_tool_arrow.png</file>
-        <file>statics/icon/canvas_tool_clear.png</file>
-        <file>statics/icon/canvas_tool_pen.png</file>
-        <file>statics/icon/canvas_tool_rect.png</file>
-        <file>statics/icon/canvas_tool_redo.png</file>
-        <file>statics/icon/canvas_tool_undo.png</file>
+        <file alias="canvas_arrow">statics/icon/canvas_tool_arrow.png</file>
+        <file alias="canvas_clear">statics/icon/canvas_tool_clear.png</file>
+        <file alias="canvas_pen">statics/icon/canvas_tool_pen.png</file>
+        <file alias="canvas_rect">statics/icon/canvas_tool_rect.png</file>
+        <file alias="canvas_redo">statics/icon/canvas_tool_redo.png</file>
+        <file alias="canvas_undo">statics/icon/canvas_tool_undo.png</file>
         <file alias="company_checked">statics/icon/checked.png</file>
         <file alias="titlebar_close">statics/icon/close.png</file>
-        <file>statics/icon/close_ellipse_red.png</file>
-        <file>statics/icon/comment_tool_at.png</file>
-        <file>statics/icon/comment_tool_reference.png</file>
-        <file>statics/icon/comment_tool_stamp.png</file>
+        <file alias="close_btn_ellipse_red">statics/icon/close_ellipse_red.png</file>
+        <file alias="at_btn">statics/icon/comment_tool_at.png</file>
+        <file alias="reference_btn">statics/icon/comment_tool_reference.png</file>
+        <file alias="stamp_btn">statics/icon/comment_tool_stamp.png</file>
         <file>statics/icon/delete_comment.png</file>
-        <file>statics/icon/delete_comment.svg</file>
+        <file alias="comment_delete.svg">statics/icon/delete_comment.svg</file>
         <file>statics/icon/export.png</file>
         <file alias="export.svg">statics/icon/export.svg</file>
         <file alias="file_image_audio">statics/icon/file_image_audio.png</file>
@@ -27,17 +27,17 @@
         <file alias="file_type_image">statics/icon/file_type_pic.png</file>
         <file alias="file_type_video">statics/icon/file_type_video.png</file>
         <file alias="folder_icon">statics/icon/folder_icon.png</file>
-        <file>statics/icon/forward.png</file>
-        <file>statics/icon/fullscreen.png</file>
+        <file alias="forward">statics/icon/forward.png</file>
+        <file alias="fullscreen">statics/icon/fullscreen.png</file>
         <file>statics/icon/group_btn.png</file>
         <file alias="test_group_mark">statics/icon/group_mark.png</file>
         <file alias="titlebar_maximize">statics/icon/maximize.png</file>
-        <file>statics/icon/media_time_indicator.png</file>
+        <file alias="media_time_indicator">statics/icon/media_time_indicator.png</file>
         <file alias="menu">statics/icon/menu.png</file>
         <file alias="titlebar_minimize">statics/icon/minimize.png</file>
         <file alias="monitor">statics/icon/monitor.png</file>
         <file>statics/icon/new_comment.png</file>
-        <file>statics/icon/new_comment.svg</file>
+        <file alias="comment_new.svg">statics/icon/new_comment.svg</file>
         <file alias="pause">statics/icon/pause.png</file>
         <file alias="play">statics/icon/play.png</file>
         <file alias="project_btn">statics/icon/project_btn.png</file>
@@ -49,9 +49,14 @@
         <file alias="company_switcher">statics/icon/switch.png</file>
         <file>statics/icon/target.png</file>
         <file alias="video">statics/icon/video.png</file>
-        <file>statics/icon/volume.png</file>
-        <file>statics/icon/volume_zero.png</file>
+        <file alias="volume">statics/icon/volume.png</file>
+        <file alias="volume_zero">statics/icon/volume_zero.png</file>
         <file alias="replay">statics/icon/replay.png</file>
+        <file alias="loading.svg">statics/icon/loading.svg</file>
+        <file alias="decrease.svg">statics/icon/decrease.svg</file>
+        <file alias="expend.svg">statics/icon/expend.svg</file>
+        <file alias="increase.svg">statics/icon/increase.svg</file>
+        <file alias="book.svg">statics/icon/book.svg</file>
     </qresource>
     <qresource prefix="/texture">
         <file alias="filecard_bg">statics/texture/card_file_background.png</file>

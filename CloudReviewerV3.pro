@@ -16,6 +16,7 @@ DEFINES += DEBUG
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+        commentlistmodel.cpp \
         companylistmodel.cpp \
         confighelper.cpp \
         decodeworker.cpp \
@@ -26,15 +27,18 @@ SOURCES += \
         hlsindex.cpp \
         httpfunctions.cpp \
         main.cpp \
+        paintcanvas.cpp \
         projectlistmodel.cpp \
         promptprovider.cpp \
         replyparser.cpp \
         replytimeout.cpp \
         runtimecontext.cpp \
         sonic.c \
+        stakeholderlistmodel.cpp \
         tsfile.cpp \
         tsroll.cpp \
         user.cpp \
+        versionlistmodel.cpp \
         videoplayer.cpp
 
 RESOURCES += \
@@ -60,25 +64,30 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
+    commentlistmodel.h \
     companylistmodel.h \
     confighelper.h \
     decodeworker.h \
     def.h \
+    emojis.h \
     filelistmodel.h \
     formatchecker.h \
     formattransformer.h \
     framequeue.h \
     hlsindex.h \
     httpfunctions.h \
+    paintcanvas.h \
     projectlistmodel.h \
     promptprovider.h \
     replyparser.h \
     replytimeout.h \
     runtimecontext.h \
     sonic.h \
+    stakeholderlistmodel.h \
     tsfile.h \
     tsroll.h \
     user.h \
+    versionlistmodel.h \
     videoplayer.h
 
 DISTFILES +=
