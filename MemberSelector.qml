@@ -65,9 +65,7 @@ Popup {
                         width: height
                         height: 30
                         radius: width / 2
-                        source: "qrc:/texture/filecard_bg"
-                            /*utils.getHttpImageStr(config_helper.ImageIp,
-                                                      image)*/
+                        source: httpFunctions.getInternalImageUrl(imageUrl)
 
                     }
                     Text {

@@ -1,10 +1,11 @@
-#ifndef USER_H
+﻿#ifndef USER_H
 #define USER_H
 
 #include <QObject>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QImage>
+#include <httpfunctions.h>
 
 class User : public QObject
 {

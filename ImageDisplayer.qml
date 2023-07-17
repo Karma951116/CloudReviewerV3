@@ -39,7 +39,7 @@ Rectangle {
     function move(deltaX, deltaY) {
         test.x = test.x + deltaX;
         test.y = test.y + deltaY;
-        console.log(test.x, test.y);
+        //console.log(test.x, test.y);
     }
 
     Connections {

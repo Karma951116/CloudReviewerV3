@@ -64,7 +64,7 @@ ComboBox {
                 anchors.left: asset_version_name.right
                 anchors.leftMargin: 10
                 anchors.verticalCenter: parent.verticalCenter
-                source: imageUrl
+                source: httpFunctions.getInternalImageUrl(imageUrl)
             }
 
             Column {

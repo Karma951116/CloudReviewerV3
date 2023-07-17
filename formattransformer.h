@@ -18,9 +18,10 @@ public:
     Q_INVOKABLE QString timestamp2RelTime(QString time);
     Q_INVOKABLE QString image2Base64(QImage image);
     Q_INVOKABLE QString image2Base64FromLocalFile(QString filePath);
-
-    static QString toDateTime(QJsonValue time);
-    static QString getMediaTypeBySuffix(QString suffix);
+    Q_INVOKABLE bool exportCommentsJson(QJsonArray comments, QString exportPath);
+    Q_INVOKABLE static QString uuidGenerate32();
+    Q_INVOKABLE static QString toDateTime(QJsonValue time);
+    Q_INVOKABLE static QString getMediaTypeBySuffix(QString suffix);
 signals:
 
 };

@@ -59,8 +59,7 @@ TRectangle {
                 id: user_avatar
                 width: 24
                 height: 24
-                source: utils.getHttpImageStr(config_helper.ImageIp,
-                                              commentSendUser["image"])
+                source: httpFunctions.getInternalImageUrl(sender["image"])
             }
 
             Text {

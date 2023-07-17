@@ -1,4 +1,4 @@
-import QtQuick 2.0
+﻿import QtQuick 2.0
 import "qrc:/Widget"
 import "qrc:/Base"
 import Toou2D 1.0
@@ -34,7 +34,7 @@ Rectangle {
     }
     // 项目资产搜索
     FileSercher {
-        id:file_sercher
+        id: file_sercher
         width: 840
         height: 62
         anchors.left: company_selector.right
@@ -42,7 +42,7 @@ Rectangle {
         anchors.verticalCenter: company_selector.verticalCenter
     }
     UserCenter {
-        width: 250
+        width: 200
         height: 38
         anchors.verticalCenter: divider.verticalCenter
         anchors.right: window_buttons.left

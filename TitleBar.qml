@@ -1,4 +1,4 @@
-import QtQuick 2.0
+﻿import QtQuick 2.0
 
 
 Item {
@@ -10,11 +10,6 @@ Item {
     property var fontFamily: ""
     property int fontPixelSize: 14
 
-
-//    signal minimized();
-//    signal maximized();
-//    signal restored();
-//    signal closed();
     signal moved(var deltaX, var deltaY)
 
     implicitWidth: 1280
@@ -64,42 +59,4 @@ Item {
             moved(mouse.x - clickPos.x, mouse.y - clickPos.y)
         }
     }
-
-//    // Right buttons
-//    Row {
-//        anchors.right: parent.right
-//        anchors.verticalCenter: parent.verticalCenter
-//        spacing: 10
-
-//        CusIconButton {
-//            id: minimize_btn
-//            width: 16
-//            height: 16
-//            source: "qrc:/icon/titlebar_minimize"
-//            onClicked: {
-//                minimized();
-//            }
-//        }
-//        CusIconButton {
-//            id: maximize_btn
-//            width: 16
-//            height: 16
-//            source: "qrc:/icon/titlebar_maximize"
-//            onClicked: {
-//                bMaximized ? restored() : maximized();
-//                bMaximized = !bMaximized;
-//            }
-//        }
-//        CusIconButton {
-//            id: close_btn
-//            width: 16
-//            height: 16
-//            source: "qrc:/icon/titlebar_close"
-//            hoverColor: "#ff3333"
-//            pressColor: "#ff8080"
-//            onClicked: {
-//                closed();
-//            }
-//        }
-//    }
 }

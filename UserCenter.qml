@@ -1,9 +1,9 @@
-import QtQuick 2.0
+﻿import QtQuick 2.0
 import Toou2D 1.0
 import QtQuick.Controls 2.0
 
 Item {
-    implicitWidth: 250
+    implicitWidth: contentItem.width
     implicitHeight: 38
 
     property bool hasBell: true
@@ -11,11 +11,11 @@ Item {
 
     TAvatar {
         id: avatar
+        property var imageUuid
         width: 38
         height: 38
         anchors.top: parent.top
         anchors.left: parent.left
-        source: "qrc:/texture/login_bg"
         radius: width / 2
     }
 
@@ -61,6 +61,7 @@ Item {
             logout_popup.open();
         }
     }
+
     Popup {
         id: logout_popup
         width: 200
@@ -139,4 +140,18 @@ Item {
         visible: hasBell
     }
 
+//    Connections {
+//        target: httpFunctions
+//        onNetImageReply: {
+//            if (uuid === avatar.imageUuid) {
+//                avatar.source = data;
+//            }
+//        }
+//    }
+    Connections {
+        target: login_page
+        onLoginCompleted: {
+            avatar.source = httpFunctions.getInternalImageUrl(clientUser.avatarUrl());
+        }
+    }
 }

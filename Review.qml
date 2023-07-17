@@ -575,12 +575,24 @@ Rectangle {
                 player_bg.visible = false;
                 comment_browser.visible = false;
 
-                video_panel.width = Screen.width;
-                video_panel.height = Screen.height;
-                video_panel.anchors.top = review.top;
-                video_panel.anchors.left = review.left;
-                video_panel.anchors.topMargin = 0;
-                video_panel.anchors.leftMargin = 0;
+                if (runtimeCtx.getFileType() === RuntimeContext.VIDEO ||
+                        runtimeCtx.getFileType() === RuntimeContext.AUDIO) {
+                    video_panel.width = Screen.width;
+                    video_panel.height = Screen.height;
+                    video_panel.anchors.top = review.top;
+                    video_panel.anchors.left = review.left;
+                    video_panel.anchors.topMargin = 0;
+                    video_panel.anchors.leftMargin = 0;
+                }
+                else if (runtimeCtx.getFileType() === RuntimeContext.IMAGE) {
+                    image_panel.width = Screen.width;
+                    image_panel.height = Screen.height;
+                    image_panel.anchors.top = review.top;
+                    image_panel.anchors.left = review.left;
+                    image_panel.anchors.topMargin = 0;
+                    image_panel.anchors.leftMargin = 0;
+                }
+
                 isFullScreen = true;
             }
             else {
@@ -590,12 +602,23 @@ Rectangle {
                 player_bg.visible = true;
                 comment_browser.visible = true;
 
-                video_panel.width = 1280;
-                video_panel.height = 723;
-                video_panel.anchors.top = player_bg.top;
-                video_panel.anchors.topMargin = 28;
-                video_panel.anchors.left = player_bg.left;
-                video_panel.anchors.leftMargin = 160;
+                if (runtimeCtx.getFileType() === RuntimeContext.VIDEO ||
+                        runtimeCtx.getFileType() === RuntimeContext.AUDIO) {
+                    video_panel.width = 1280;
+                    video_panel.height = 798;
+                    video_panel.anchors.top = player_bg.top;
+                    video_panel.anchors.topMargin = 28;
+                    video_panel.anchors.left = player_bg.left;
+                    video_panel.anchors.leftMargin = 160;
+                }
+                else if (runtimeCtx.getFileType() === RuntimeContext.IMAGE) {
+                    image_panel.width = 1280;
+                    image_panel.height = 798;
+                    image_panel.anchors.top = player_bg.top;
+                    image_panel.anchors.topMargin = 28;
+                    image_panel.anchors.left = player_bg.left;
+                    image_panel.anchors.leftMargin = 160;
+                }
                 isFullScreen = false;
             }
         }

@@ -35,7 +35,7 @@ Rectangle {
 
             else {
                 // 获取网络图像
-                fileImageUrl;
+                httpFunctions.getInternalImageUrl(fileImageUrl);
                 //httpFunctions.getNetworkImage(fileImageUrl, uuid);
             }
         }

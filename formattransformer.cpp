@@ -1,7 +1,11 @@
 ﻿#include "formattransformer.h"
 #include <QDateTime>
+#include <QJsonDocument>
+#include <QFile>
 #include <QTime>
 #include <QBuffer>
+#include <QDebug>
+#include <QUuid>
 #include "def.h"
 
 FormatTransformer::FormatTransformer(QObject *parent) : QObject(parent)
@@ -87,6 +91,21 @@ QString FormatTransformer::image2Base64FromLocalFile(QString filePath)
     return b64str;
 }
 
+bool FormatTransformer::exportCommentsJson(QJsonArray comments, QString exportPath)
+{
+    QJsonDocument doc = QJsonDocument(comments);
+    QString filePath = exportPath.remove("file:///");
+    QFile file(filePath);
+    if(!file.open(QIODevice::WriteOnly | QIODevice::Text)){
+        qDebug() << QString("Fail to open the file:" + filePath);
+        return false;
+    }
+    //write and close
+    file.write(doc.toJson());
+    file.close();
+    return true;
+}
+
 QString FormatTransformer::toDateTime(QJsonValue time)
 {
     qint64 timeStamp = time.toDouble();
@@ -107,4 +126,10 @@ QString FormatTransformer::getMediaTypeBySuffix(QString suffix)
     else {
         return "other";
     }
+}
+
+QString FormatTransformer::uuidGenerate32()
+{
+    QUuid uuid = QUuid::createUuid();
+    return uuid.toString().remove("{").remove("}").remove("-").toUpper();
 }

@@ -261,11 +261,11 @@ bool HttpFunctions::getFileVersions(QString auditContentUuid)
 
 void HttpFunctions::getIndex(QString auditFileFolderUuid)
 {
+    QString url = urlHead();
     QUrl qUrl;
 #ifdef DEBUG
     if (auditFileFolderUuid == "DA90E58E90AD483BAF81471F27216613") {
         //qUrl.setUrl("https://s7.fsvod1.com/20221010/ewaGwIfh/1500kb/hls/index.m3u8");
-        QString url = urlHead();
         url += "/cloud_review_test/cloudmovie/interrogationRoom/V1/index.m3u8";
         qUrl.setUrl(url);
     }
@@ -274,7 +274,8 @@ void HttpFunctions::getIndex(QString auditFileFolderUuid)
     }
 #endif
 #ifdef PROD
-    qUrl.setUrl("http://192.168.10.110:8069/cloudmovie/interrogationRoom/V1/index.m3u8");
+    url += "/cloudmovie/interrogationRoom/V1/index.m3u8";
+    qUrl.setUrl(url);
 #endif
     QUrlQuery qUrlQuery;
     qUrlQuery.addQueryItem("auditFileFolderUuid", auditFileFolderUuid);
@@ -287,12 +288,15 @@ void HttpFunctions::getIndex(QString auditFileFolderUuid)
 
 void HttpFunctions::getMediaInfo(QString auditFileFolderUuid)
 {
+    QString url = urlHead();
     QUrl qUrl;
 #ifdef DEBUG
-    qUrl.setUrl("http://127.0.0.1:6344/cloud_review_test/cloudmovie/interrogationRoom/V1/index");
+    url += "/cloud_review_test/cloudmovie/interrogationRoom/V1/index";
+    qUrl.setUrl(url);
 #endif
 #ifdef PROD
-    qUrl.setUrl("http://192.168.10.110:8069/cloudmovie/interrogationRoom/V1/index.txt");
+    url += "/cloudmovie/interrogationRoom/V1/index.txt"
+    qUrl.setUrl(url);
 #endif
     QUrlQuery qUrlQuery;
     qUrlQuery.addQueryItem("auditFileFolderUuid", auditFileFolderUuid);
@@ -305,11 +309,11 @@ void HttpFunctions::getMediaInfo(QString auditFileFolderUuid)
 
 void HttpFunctions::getTs(QString tsName, TsFile *ts, QString auditFileFolderUuid)
 {
+    QString url = urlHead();
     QUrl qUrl;
 #ifdef DEBUG
     if (auditFileFolderUuid == "DA90E58E90AD483BAF81471F27216613") {
         //qUrl.setUrl("https://s7.fsvod1.com" + tsName);
-        QString url = urlHead();
         url += "/cloud_review_test/cloudmovie/interrogationRoom/V1/ts";
         qUrl.setUrl(url);
         QUrlQuery qUrlQuery;
@@ -321,7 +325,8 @@ void HttpFunctions::getTs(QString tsName, TsFile *ts, QString auditFileFolderUui
     }
 #endif
 #ifdef PROD
-    qUrl.setUrl("http://192.168.10.110:8069/cloudmovie/interrogationRoom/V1/index.ts");
+    url += "/cloudmovie/interrogationRoom/V1/index.ts"
+    qUrl.setUrl(url);
     QUrlQuery qUrlQuery;
     qUrlQuery.addQueryItem("auditFileFolderUuid", auditFileFolderUuid);
     qUrlQuery.addQueryItem("TsName", tsName);
@@ -331,19 +336,43 @@ void HttpFunctions::getTs(QString tsName, TsFile *ts, QString auditFileFolderUui
     request_.setRawHeader("Cookie", session_id_.toUtf8());
     request_.setUrl(qUrl);
     QNetworkReply* reply = manager_->get(request_);
-//    ReplyTimeout* timeout = new ReplyTimeout(reply, 3000);
-//    connect(timeout, &ReplyTimeout::timeout, this, &HttpFunctions::onTsTimeout);
     map_.insert(reply, ReplyMeta{TS, ts, 0});
     ts->setFetchState(TsFile::TsState::FETCHING);
 }
 
 bool HttpFunctions::getNetworkImage(QString imageUrl, QString uuid)
 {
-    QUrl url;
-    url.setUrl(imageUrl);
-    request_.setUrl(url);
+    QString url = urlHead();
+    QUrl qUrl;
+#ifdef DEBUG
+    url += "/cloud_review_test/cloudmovie/interrogationRoom/V1/NetImage";
+    qUrl.setUrl(url);
+    request_.setRawHeader("Cookie", "cmc_token=" + accessToken_.toUtf8());
+#endif
+#ifdef PROD
+    url += "/cloudmovie/interrogationRoom/V1/refreshTheCommentInformation";
+    qUrl.setUrl(url);
+    request_.setRawHeader("Cookie", session_id_.toUtf8());
+#endif
+    request_.setUrl(qUrl);
     map_.insert(manager_->get(request_), ReplyMeta{NETWORK_IMAGE, 0, uuid});
     return true;
+}
+
+QString HttpFunctions::getInternalImageUrl(QString url)
+{
+    QString retUrl = urlHead();
+#ifdef DEBUG
+    retUrl += url;
+    //retUrl += "&Cookie=\"cmc_token=" + accessToken_.toUtf8() +"\"";
+    //request_.setRawHeader("Cookie", "cmc_token=" + accessToken_.toUtf8());
+#endif
+#ifdef PROD
+    retUrl += url;
+    //retUrl += "&Cookie=" + session_id_.toUtf8();
+    //request_.setRawHeader("Cookie", session_id_.toUtf8());
+#endif
+    return retUrl;
 }
 
 bool HttpFunctions::getRefreshComment(QString auditFileFolderUuid)
@@ -402,6 +431,9 @@ void HttpFunctions::onRequestFinished(QNetworkReply *reply)
 {
     getSessionId(reply);
     ReplyMeta meta = map_.value(reply);
+    if (meta.type == NETWORK_IMAGE) {
+        netImageReply(reply->readAll(), meta.userData2);
+    }
     replied(meta, reply->readAll(), reply->error());
 }
 

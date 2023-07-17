@@ -30,9 +30,7 @@ TRectangle {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         radius: width / 2
-        source: "qrc:/texture/filecard_bg"
-            /*utils.getHttpImageStr(config_helper.ImageIp,
-                                      comment["commentSendUser"]["image"])*/
+        source: httpFunctions.getInternalImageUrl(sender["image"])
         border.width: comment_node.hovered ? 1 : 0
         border.color: "#FFFFFF"
     }

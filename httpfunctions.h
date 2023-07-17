@@ -39,6 +39,7 @@ public:
     Q_INVOKABLE void getTs(QString tsName, TsFile* ts, QString auditFileFolderUuid);
 
     Q_INVOKABLE bool getNetworkImage(QString imageUrl, QString uuid);
+    Q_INVOKABLE QString getInternalImageUrl(QString url);
     Q_INVOKABLE bool getRefreshComment(QString auditFileFolderUuid);
 
 
@@ -60,6 +61,7 @@ private:
 signals:
     void replied(ReplyMeta meta, QByteArray content,
                  QNetworkReply::NetworkError = QNetworkReply::NoError);
+    void netImageReply(QByteArray data, QString uuid);
 public slots:
     void onUpdateTokens(QString accessToken, QString refreshToken);
     void onRequestTsFile(QString tsName, TsFile* Ts, QString auditFileFolderUuid);

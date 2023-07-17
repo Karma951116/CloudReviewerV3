@@ -1,4 +1,4 @@
-import QtQuick 2.0
+﻿import QtQuick 2.0
 import Toou2D 1.0
 import "qrc:/Base"
 import "qrc:/Widget"
@@ -153,6 +153,7 @@ Rectangle {
                 config.setConfig("Login", "Pwd",
                                  formatTransformer.strToBase64(input_loader.item.pwd));
             }
+            parent.loginCompleted();
         }
     }
 }

@@ -1,9 +1,12 @@
-import QtQuick 2.0
+﻿import QtQuick 2.0
 import "qrc:/Widget"
 
 Item {
     property alias windowButtons: window_buttons
     property alias titlebar: titlebar
+
+    signal loginCompleted()
+
     Image {
         id: bg
         anchors.fill: parent
@@ -43,6 +46,7 @@ Item {
         width: parent.width * 0.254
         height: parent.height * 0.514
     }
+
     onVisibleChanged: {
         if (visible) {
            login_input.reset();
